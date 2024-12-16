@@ -298,7 +298,6 @@ body {
 #sarana-prasarana {
     margin-top: 50px;
     padding: 20px;
-    background-color: #f9f9f9;
 }
 
 html {
@@ -401,7 +400,6 @@ html {
     text-align: center;
 }
 
-
 @media (max-width: 1024px) {
     .card {
         width: 30%;
@@ -424,14 +422,13 @@ html {
 }
 
 /* Gaya untuk kontainer induk */
+/* Gaya untuk kontainer induk */
 #mading-container {
-    display: flex; /* Menggunakan Flexbox */
-    flex-direction: row; /* Mengatur elemen mengalir dari kiri ke kanan */
-    justify-content: flex-start; /* Memastikan elemen mulai dari sisi kiri */
-    align-items: flex-start; /* Atur sejajar atas */
-    gap: 10px; /* Jarak antar elemen */
+    display: flex;
+    flex-wrap: wrap; /* Membungkus kartu ke bawah jika tidak cukup ruang */
+    gap: 10px; /* Jarak antar kartu */
+    justify-content: center;
     padding: 10px;
-    overflow-x: auto; /* Memungkinkan scroll horizontal jika diperlukan */
   }
   
   /* Gaya untuk setiap kartu mading */
@@ -505,7 +502,7 @@ html {
   .button-view {
     display: block;
     text-align: center;
-    background-color: #007BFF;
+    background-color: #004D40;
     color: white;
     padding: 5px;
     margin-top: 10px;
@@ -515,7 +512,7 @@ html {
   }
   
   .button-view:hover {
-    background-color: #0056b3;
+    background-color: #00332c;
   }
 
 .staff-slider {

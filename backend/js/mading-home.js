@@ -40,6 +40,7 @@ function renderMading(data) {
           <span class="user-icon">👤</span>
           <span class="author-text">by admin</span>
         </div>
+        <span class="button-view" onclick="window.location.href='/mading-detail?id=${item.id}'">Baca Selengkapnya</span>
       `;
       container.appendChild(card);
     }

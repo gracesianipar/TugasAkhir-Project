@@ -635,16 +635,27 @@ app.post('/api/mading', upload.single('image'), async (req, res) => {
 // Get all mading
 app.get('/api/mading', async (req, res) => {
     try {
-        const query = 'SELECT * FROM mading'; // Pastikan tabel 'siswa' ada
-        const [rows] = await db.query(query);
+        const searchQuery = req.query.search || ''; // Ambil query pencarian
+        let query = 'SELECT * FROM mading';
+
+        // Tambahkan kondisi WHERE hanya jika ada parameter pencarian
+        if (searchQuery) {
+            query += ' WHERE judul LIKE ?';
+        }
+
+        // Tambahkan ORDER BY untuk mengurutkan berdasarkan tanggal terbaru
+        query += ' ORDER BY tanggal DESC';
+
+        // Jalankan query dengan aman menggunakan parameterisasi
+        const [rows] = await db.query(query, searchQuery ? [`%${searchQuery}%`] : []);
 
         if (rows.length > 0) {
             res.status(200).json(rows);
         } else {
-            res.status(404).json({ message: 'Tidak ada data siswa ditemukan.' });
+            res.status(404).json({ message: 'Tidak ada data mading ditemukan.' });
         }
     } catch (error) {
-        console.error('Error mengambil data siswa:', error);
+        console.error('Error mengambil data mading:', error);
         res.status(500).json({ message: 'Terjadi kesalahan pada server.' });
     }
 });
@@ -666,6 +677,26 @@ app.get('/api/mading/:id', async (req, res) => {
     } catch (error) {
         console.error('Error mengambil data Mading:', error);
         res.status(500).json({ message: 'Terjadi kesalahan pada server!' });
+    }
+});
+
+app.delete('/api/mading/:id', async (req, res) => {
+    const { id } = req.params; // Ambil ID dari parameter URL
+    try {
+        // Query untuk menghapus data dari tabel tahun_ajaran
+        const deleteQuery = 'DELETE FROM mading WHERE id = ?';
+        const [result] = await db.query(deleteQuery, [id]);
+
+        // Cek apakah data berhasil dihapus
+        if (result.affectedRows > 0) {
+            res.status(200).json({ message: 'Pengumuman berhasil dihapus.' });
+        } else {
+            res.status(404).json({ message: 'Pengumuman ajaran tidak ditemukan.' });
+        }
+    } catch (error) {
+        // Log error untuk debugging
+        console.error("Error deleting Pengumumann:", error);
+        res.status(500).json({ message: 'Terjadi kesalahan pada server.' });
     }
 });
 
@@ -694,41 +725,23 @@ app.get('/api/mading-detail', async (req, res) => {
 // Endpoint untuk Home - Menampilkan hanya 5 pengumuman terbaru
 app.get('/api/mading-home', async (req, res) => {
     try {
+        // Ambil data mading dari database, diurutkan berdasarkan tanggal terbaru
         const query = 'SELECT * FROM mading ORDER BY tanggal DESC LIMIT 5';
         const [rows] = await db.query(query);
 
         if (rows.length > 0) {
+            // Jika data ditemukan, kirim data dalam format JSON
             res.status(200).json(rows);
         } else {
+            // Jika tidak ada data ditemukan
             res.status(404).json({ message: 'Tidak ada data mading ditemukan.' });
         }
     } catch (error) {
+        // Log error jika terjadi masalah
         console.error('Error mengambil data mading untuk Home:', error);
         res.status(500).json({ message: 'Terjadi kesalahan pada server.' });
     }
 });
-
-app.delete('/api/mading/:id', async (req, res) => {
-    const { id } = req.params; // Ambil ID dari parameter URL
-    try {
-        // Query untuk menghapus data dari tabel tahun_ajaran
-        const deleteQuery = 'DELETE FROM mading WHERE id = ?';
-        const [result] = await db.query(deleteQuery, [id]);
-
-        // Cek apakah data berhasil dihapus
-        if (result.affectedRows > 0) {
-            res.status(200).json({ message: 'Pengumuman berhasil dihapus.' });
-        } else {
-            res.status(404).json({ message: 'Pengumuman ajaran tidak ditemukan.' });
-        }
-    } catch (error) {
-        // Log error untuk debugging
-        console.error("Error deleting Pengumumann:", error);
-        res.status(500).json({ message: 'Terjadi kesalahan pada server.' });
-    }
-});
-
-
 
 app.listen(PORT, () => {
     console.log(`Server berjalan di http://localhost:${PORT}`);

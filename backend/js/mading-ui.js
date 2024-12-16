@@ -1,20 +1,36 @@
-// Fungsi untuk mengambil data dari server
-async function fetchMading(searchTerm = '') {
+let allMading = []; // Simpan semua data mading dari server
+
+// Fungsi untuk mengambil semua data mading dari server
+async function fetchAllMading() {
   try {
-    const response = await fetch(`/api/mading?search=${encodeURIComponent(searchTerm)}`); 
+    showLoading(true);
+    const response = await fetch('/api/mading');
     if (!response.ok) {
       throw new Error(`HTTP error! Status: ${response.status}`);
     }
-
     const data = await response.json();
-    console.log("Data dari server:", data);
-    renderMading(data);
+    allMading = data; // Simpan data ke dalam variabel global
+    renderMading(allMading);
   } catch (error) {
-    console.error("Error fetching data Mading:", error);
+    console.error("Error fetching all Mading:", error);
+  } finally {
+    showLoading(false);
   }
 }
 
-// Fungsi untuk merender data di frontend
+// Fungsi untuk memfilter daftar mading berdasarkan kata kunci
+function filterMading(searchTerm) {
+  if (!searchTerm) {
+    renderMading(allMading); // Jika tidak ada kata kunci, tampilkan semua data
+  } else {
+    const filteredData = allMading.filter(item =>
+      item.judul.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    renderMading(filteredData);
+  }
+}
+
+// Fungsi untuk merender data ke UI
 function renderMading(data) {
   const container = document.getElementById("mading-container");
   container.innerHTML = ""; 
@@ -53,23 +69,27 @@ function renderMading(data) {
   }
 }
 
-// Fungsi untuk menangani pencarian
-function performSearch() {
-  const searchTerm = document.getElementById('search-bar').value; 
-  fetchMading(searchTerm);
-}
-
-// Fungsi untuk menangani event Enter di keyboard
-function handleKeydown(event) {
-  if (event.key === 'Enter') {
-    performSearch();
-  }
-}
-
-// fungsi saat halaman dimuat
+// Tambahkan listener untuk menangani input di search bar
 document.addEventListener("DOMContentLoaded", function () {
-  fetchMading();
-  // Tambahkan listener untuk menangani Enter
+  fetchAllMading(); // Ambil semua data saat halaman pertama kali dimuat
+
   const searchInput = document.getElementById('search-bar');
-  searchInput.addEventListener('keydown', handleKeydown);
+  searchInput.addEventListener('input', debounce(function (event) {
+    filterMading(event.target.value); // Filter hasil setiap kali input berubah
+  }, 300));
 });
+
+// Gunakan debounce untuk mengurangi jumlah panggilan
+function debounce(func, wait) {
+  let timeout;
+  return function(...args) {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func.apply(this, args), wait);
+  };
+}
+
+// Indikator Loading
+function showLoading(isLoading) {
+  const loadingIndicator = document.getElementById('loading-indicator');
+  loadingIndicator.style.display = isLoading ? 'block' : 'none';
+}
