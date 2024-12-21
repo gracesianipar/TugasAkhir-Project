@@ -47,10 +47,26 @@
                 <h2>Selamat Datang, <span id="employee-name-message" class="employee-name">Tamu</span></h2>
             </div>
             <section id="admin-profile" class="content-section hidden">
-                <div class="profile-container">
-                    <div class="profile-picture">
-                        <img id="profile-image" src="/images/profile/kepsek.png" alt="Admin Picture">
+                <div class="profile-picture">
+                    <div class="profile-wrapper">
+                        <div class="profile-container">
+                            <img id="profile-image" src="/images/profile/kepsek.png" alt="Admin Picture">
+                            <div class="camera-text-wrapper">
+                                <span class="camera-text">
+                                    <i class="fas fa-camera"></i> Klik untuk ubah foto profil
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="dropdown-menu">
+                            <ul>
+                                <li><a href="#" id="view-photo"><i class="fas fa-eye"></i> Lihat Foto</a></li>
+                                <li><a href="#" id="browse-photo"><i class="fas fa-upload"></i> Unggah Foto</a></li>
+                                <li><a href="#" id="remove-photo"><i class="fas fa-trash"></i> Hapus Foto</a></li>
+                            </ul>
+                        </div>
                     </div>
+
                     <hr class="profile-divider">
                     <div class="profile-details">
                         <div class="bio-item">

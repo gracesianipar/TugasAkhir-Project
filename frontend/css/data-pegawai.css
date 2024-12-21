@@ -1,0 +1,228 @@
+/* CSS untuk tabel Data Pegawai */
+#data-pegawai table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+/* Menghapus background dan menggunakan border untuk header tabel */
+table th {
+ background-color: #004D40; 
+  padding: 8px; 
+  text-align: left; 
+  font-size: 12px; 
+  font-weight: normal; 
+  color: #f1f1f1;
+  font-size: bold;
+  align-items: center;
+}
+
+/* Styling untuk body tabel agar lebih rapi */
+table td {
+  padding: 8px; 
+  font-size: 12px;
+}
+
+/* Styling untuk tabel secara keseluruhan */
+table {
+  width: 100%;
+  border-collapse: collapse; /* Menggabungkan border untuk tampilan yang lebih rapi */
+  margin-top: 10px; /* Menambahkan margin atas untuk jarak */
+}
+
+#data-pegawai table tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+#data-pegawai table tr:hover {
+  background-color: #f1f1f1;
+}
+
+#data-pegawai h2 {
+  color: #2d3b47;
+  margin-bottom: 20px;
+}
+
+.link-detail {
+  color: #007bff; 
+  text-decoration: none; 
+  font-weight: bold; 
+  text-decoration: underline; 
+}
+
+.link-detail:hover {
+  color: #0056b3; 
+}
+
+/* Styling untuk tombol Edit dan Delete */
+button {
+  padding: 5px 10px;
+  margin-right: 10px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+button:hover {
+  opacity: 0.8;
+}
+
+/* Styling untuk tombol Edit */
+button:nth-child(1) {
+  background-color: #004D40;
+  color: white;
+  font-size: 12px;
+}
+
+/* Styling untuk tombol Delete */
+button:nth-child(2) {
+  background-color: #f44336; 
+  color: white;
+  font-size: 12px;
+}
+
+.search-add-container {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.search-wrapper {
+  position: relative;
+  width: 70%;
+}
+
+.search-bar {
+  width: 100%;
+  padding: 6px 32px 6px 8px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.search-bar:hover {
+  border-color: #004D40;  
+}
+
+.search-bar:focus {
+  border-color: #004D40;  
+  outline: none; 
+}
+.search-icon {
+  position: absolute;
+  right: 8px; 
+  top: 50%;
+  transform: translateY(-50%);
+  color: #ccc;
+}
+
+.add-btn-pegawai {
+  padding: 8px 16px;
+  font-size: 16px;
+  background-color: #004D40 !important;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  
+}
+
+.add-btn:hover {
+  background-color: #004D40;
+}
+
+.modal.hidden {
+  display: none;
+}
+
+.modal {
+  display: block;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: white;
+  padding: 20px;
+  z-index: 1000;
+}
+
+.modal-content {
+  padding: 20px;
+  border-radius: 8px;
+}
+
+.close-btn {
+  cursor: pointer;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
+
+/* Styling untuk select box */
+.swal2-input {
+  appearance: none; /* Menghapus tampilan default */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  border-radius: 8px; /* Menambahkan sudut melengkung */
+  border: 1px solid #ddd; /* Border abu-abu muda */
+  padding: 10px 12px; /* Padding di dalam select */
+  font-size: 16px; /* Ukuran font */
+  width: 100%; /* Menyesuaikan lebar dengan kontainer */
+  background-color: #f9f9f9; /* Warna latar belakang */
+  color: #333; /* Warna teks */
+  box-sizing: border-box; /* Agar padding tidak membuat elemen melebihi lebar kontainer */
+  transition: all 0.3s ease; /* Animasi transisi */
+}
+
+.swal2-input:focus {
+  border-color: #004D40; /* Border hijau ketika fokus */
+  outline: none; /* Menghapus outline default */
+  background-color: #fff; /* Warna latar belakang putih saat fokus */
+}
+
+/* Styling untuk pilihan dropdown */
+.swal2-input option {
+  padding: 10px; /* Padding untuk setiap option */
+  font-size: 16px;
+  background-color: #fff; /* Latar belakang putih untuk setiap pilihan */
+  color: #333; /* Warna teks */
+}
+
+/* Styling untuk pilihan saat hover */
+.swal2-input option:hover {
+  background-color: #f0f0f0; /* Warna latar belakang saat hover */
+}
+
+/* Untuk memberi padding pada container swal */
+.swal2-container {
+  font-family: 'Arial', sans-serif; /* Font untuk Swal */
+}
+
+/* Optional: Styling tambahan untuk multiple select */
+.swal2-input[multiple] {
+  height: 150px; /* Menambahkan tinggi pada select multiple */
+  overflow-y: auto; /* Agar scrollable jika pilihan banyak */
+}
+
+/* Styling untuk note */
+.note {
+  font-size: 14px; /* Ukuran font yang lebih kecil */
+  color: #888; /* Warna teks abu-abu muda */
+  margin-top: 8px; /* Jarak antara select dan catatan */
+  font-style: italic; /* Memberikan gaya italic */
+}
+
+/* Styling tambahan jika ingin note lebih mencolok */
+.note strong {
+  font-weight: bold; /* Menebalkan kata Ctrl dan Cmd */
+  color: #004D40 /* Warna hijau agar lebih mencolok */
+}
+
+.button-container {
+  text-align: center; /* Menyelaraskan tombol secara horizontal ke tengah */
+}
+
+button {
+  margin: 0 5px; /* Memberikan jarak antar tombol */
+}
