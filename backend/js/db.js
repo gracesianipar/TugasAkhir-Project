@@ -5,7 +5,7 @@ const db = mysql.createPool({
     host: 'localhost',        // Host database (default: localhost)
     user: 'root',             // Username MySQL (default untuk XAMPP: root)
     password: '',             // Password MySQL (default kosong di XAMPP)
-    database: 'database_sekolah', // Nama database Anda
+    database: 'db_portalsekolah', // Nama database Anda
     waitForConnections: true,  // Jika Anda menggunakan koneksi pool
     connectionLimit: 10,      // Batas maksimal koneksi yang dapat dibuka
     queueLimit: 0             // Tidak ada batasan pada antrian

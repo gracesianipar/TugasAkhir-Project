@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guru Wali Kelas</title>
+</head>
+<body>
+    <!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <title>Guru Wali Kelas</title>
+    <link rel="stylesheet" href="/css/dashboard-admin.css">
+    <link rel="stylesheet" href="/css/data-absensi.css">
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+</head>
+
+<body>
+    <header>
+        <h1>Guru Wali Kelas</h1>
+        <div class="profile">
+            <i class="fas fa-user-circle" id="profile-icon"></i> 
+            <span id="employee-name-header" class="employee-name">Tamu</span>
+        </div>
+    </header>
+    
+    <div class="dashboard">
+        <aside class="sidebar">
+            <ul>
+                <li><a href="#" data-target="guru-matpel-profile">Profil</a></li>
+                <li><a href="#" data-target="persetujuan-nilai">Data Nilai Siswa</a></li>
+                <li><a href="#" data-target="absensi-siswa">Data Absen Siswa</a></li>
+
+            </ul>
+                </aside>
+        <main>
+            <div class="welcome-message">
+                <h2>Selamat Datang, <span id="employee-name-message" class="employee-name">Tamu</span></h2>
+            </div>
+            <section id="guru-matpel-profile" class="content-section hidden">
+              <div class="profile-picture">
+                  <div class="profile-wrapper">
+                      <div class="profile-container">
+                          <img id="profile-image" src="/images/profile/kepsek.png" alt="Admin Picture">
+                          <div class="camera-text-wrapper">
+                              <span class="camera-text">
+                                  <i class="fas fa-camera"></i> Klik untuk ubah foto profil
+                              </span>
+                          </div>
+                      </div>
+
+                      <div class="dropdown-menu">
+                          <ul>
+                              <li><a href="#" id="view-photo"><i class="fas fa-eye"></i> Lihat Foto</a></li>
+                              <li><a href="#" id="browse-photo"><i class="fas fa-upload"></i> Unggah Foto</a></li>
+                              <li><a href="#" id="remove-photo"><i class="fas fa-trash"></i> Hapus Foto</a></li>
+                          </ul>
+                      </div>
+                  </div>
+
+                  <hr class="profile-divider">
+                  <div class="profile-details">
+                      <div class="bio-item">
+                          <strong>Nama</strong> <span id="biodata-name">Tidak tersedia</span>
+                      </div>
+                      <div class="bio-item">
+                          <strong>Tempat, Tanggal Lahir</strong> <span id="biodata-ttl">Tidak tersedia</span>
+                      </div>
+                      <div class="bio-item">
+                          <strong>NIP</strong> <span id="biodata-nip">Tidak tersedia</span>
+                      </div>
+                      <div class="bio-item">
+                          <strong>Jabatan</strong> <span id="biodata-role">Tidak tersedia</span>
+                      </div>
+                      <div class="bio-item">
+                          <strong>NIK</strong> <span id="biodata-nik">Tidak tersedia</span>
+                      </div>
+                      <div class="bio-item">
+                          <strong>Tanggal Mulai Tugas</strong> <span id="biodata-tmt">Tidak tersedia</span>
+                      </div>
+                      <div class="bio-item">
+                          <strong>Jenjang Pendidikan</strong> <span id="biodata-jp">Tidak tersedia</span>
+                      </div>
+                      <div class="bio-item">
+                          <strong>Jurusan</strong> <span id="biodata-jurusan">Tidak tersedia</span>
+                      </div>
+                      <div class="bio-item">
+                          <strong>Golongan</strong> <span id="biodata-golongan">Tidak tersedia</span>
+                      </div>
+                      <div class="bio-item">
+                          <strong>NUPTK</strong> <span id="biodata-nuptk">Tidak tersedia</span>
+                      </div>
+                  </div>
+              </div>
+          </section>
+            <section id="data-nilai-siswa" class="content-section hidden">
+                <h2>Data Nilai Siswa</h2>
+                <div class="filter-wrapper">
+                    <select id="tahun-ajaran-filter">
+                        <option value="">Pilih Tahun Ajaran</option>
+                    </select>
+                </div>
+                <div class="filter-wrapper">
+                    <select id="kelas-filter">
+                        <option value="">Pilih Kelas</option>
+                    </select>
+                </div>
+                <div class="filter-wrapper">
+                    <select id="mapel-filter">
+                        <option value="">Pilih Mata Pelajaran</option>
+                    </select>
+                </div>
+                <div class="search-add-container">
+                    <div class="search-wrapper">
+                        <input type="text" id="search-student-input" placeholder="Cari siswa..." class="search-bar">
+                        <i class="fas fa-search search-icon"></i> 
+                    </div>
+                </div>
+                <table border="1">
+                    <thead>
+                        <tr>
+                            <th>NISN</th>
+                            <th>Nama</th>
+                            <th>UTS</th>
+                            <th>UAS</th>
+                            <th>Tugas</th>
+                            <th>Nilai Final</th>
+                            <th>Action</th> <!-- Kolom untuk tombol Edit, Delete, dan Lihat Selengkapnya -->
+                        </tr>
+                    </thead>
+                    <tbody id="siswa-tbody">
+                    </tbody>
+                </table>
+            </section>
+
+            <section id="absensi-siswa" class="content-section hidden">
+              <h2>Data Absensi Siswa</h2>
+            
+              <div id="kelas-header"></div> 
+            
+              <div class="search-add-container">
+                <div class="search-wrapper">
+                  <input type="text" id="search-student-input" placeholder="Cari siswa..." class="search-bar">
+                  <i class="fas fa-search search-icon"></i>
+                </div>
+              </div>
+            
+              <table border="1">
+                <thead>
+                  <tr>
+                    <th>No</th>
+                    <th>Nama</th>
+                    <th>NISN</th>
+                    <th>
+                      Hadir <br> 
+                      <input type="checkbox" id="select-all-hadir"> Select All
+                    </th>
+                    <th>
+                      Izin <br> 
+                      <input type="checkbox" id="select-all-izin"> Select All
+                    </th>
+                    <th>
+                      Sakit <br> 
+                      <input type="checkbox" id="select-all-sakit"> Select All
+                    </th>
+                    <th>
+                      Alpa <br> 
+                      <input type="checkbox" id="select-all-alpa"> Select All
+                    </th>
+                  </tr>
+                </thead>
+                <tbody id="siswa-tbody-absensi">
+                </tbody>
+              </table>
+            </section>            
+        </main>
+    </div>
+    <script src="/js/dashboard-walikelas.js"></script>
+    <script src="/js/persetujuanNilai.js"></script>
+    <script src="/js/data-absensi.js"></script>
+
+
+</body>
+
+</html>
+
+
+</body>
+</html>

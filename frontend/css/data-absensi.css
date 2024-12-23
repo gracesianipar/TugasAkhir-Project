@@ -1,0 +1,68 @@
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px; 
+}
+
+th, td {
+  padding: 12px;
+  text-align: center;
+  border: 1px solid #ddd;
+  font-size: 16px;
+  color: #333;
+}
+
+th {
+  background-color: #004D40;
+  color: white;
+  font-weight: bold;
+}
+
+tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+tr:hover {
+  background-color: #f1f1f1;
+}
+
+td input[type="radio"] {
+  margin-right: 10px;
+}
+
+.select-all-container {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.select-all-container label {
+  font-size: 16px;
+  color: #333;
+  font-weight: bold;
+}
+
+.select-all-container input {
+  cursor: pointer;
+  width: 20px;
+  height: 20px;
+}
+
+@media (max-width: 768px) {
+  table {
+      font-size: 14px; 
+  }
+
+  th, td {
+      padding: 8px; 
+  }
+
+  .select-all-container {
+      flex-direction: column;
+      align-items: flex-start;
+  }
+
+  .select-all-container label {
+      margin-bottom: 8px;
+  }
+}

@@ -10,9 +10,11 @@
     <link rel="stylesheet" href="/css/dashboard-admin.css">
     <link rel="stylesheet" href="/css/data-pegawai.css">
     <link rel="stylesheet" href="/css/mading.css">
-    <!-- SweetAlert2 CSS -->
+    <link rel="stylesheet" href="/css/data_mata-pelajaran.css">
+    <link rel="stylesheet" href="/css/data-kelas.css">
+    
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-    <!-- SweetAlert2 JavaScript -->
+ 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 </head>
@@ -155,6 +157,71 @@
                     </tbody>
                 </table>
             </section>
+            <section id="data-kelas" class="content-section hidden">
+                <h2>Data Kelas</h2>
+                <div class="filter-wrapper">
+                    <label for="kelas-filter">Tahun Ajaran:</label>
+                    <select id="kelas-filter">
+                        <option value="">Semua</option>
+                        <!-- Options akan diisi melalui JavaScript -->
+                    </select>
+                </div>
+                <div class="search-add-container">
+                    <div class="search-wrapper">
+                        <input type="text" id="search-kelas-input" placeholder="Cari Data Kelas..." class="search-bar">
+                        <i class="fas fa-search search-icon"></i>
+                    </div>
+                    <button id="add-kelas-btn" class="btn btn-primary">Tambah Kelas</button>
+                </div>
+                <table border="1">
+                    <thead>
+                        <tr>
+                            <th>ID Kelas</th>
+                            <th>Nama Kelas</th>
+                            <th>Wali Kelas</th>
+                            <th>Tingkatan</th>
+                            <th>Detail</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="kelas-tbody">
+                        <!-- Data Kelas akan diisi dengan JavaScript -->
+                    </tbody>
+                </table>
+            </section>
+
+            <section id="mata-pelajaran" class="content-section hidden">
+                <h2>Data Mata Pelajaran</h2>
+                <div class="filter-wrapper">
+                    <label for="tahun-ajaran-filter">Semester:</label>
+                    <select id="tahun-ajaran-filter">
+                        <option value="">Semua</option>
+                        <!-- Options akan diisi melalui JavaScript -->
+                    </select>
+                </div>
+                <div class="search-add-container">
+                    <div class="search-wrapper">
+                        <input type="text" id="search-subject-input" placeholder="Cari mata pelajaran..." class="search-bar">
+                        <i class="fas fa-search search-icon"></i>
+                    </div>
+                    <button id="add-subject-btn" class="btn btn-primary">Tambah Mata Pelajaran</button>
+                </div>
+                
+                <table border="1">
+                    <thead>
+                        <tr>
+                            <th>Kode Mata Pelajaran</th>
+                            <th>Nama Mata Pelajaran</th>
+                            <th>NIP</th>
+                            <th>Action</th> <!-- Kolom untuk tombol Edit, Delete, dan Lihat Selengkapnya -->
+                        </tr>
+                    </thead>
+                    <tbody id="mata-pelajaran-tbody">
+                        <!-- Data Mata Pelajaran akan diisi dengan JavaScript -->
+                    </tbody>
+                </table>
+            </section>    
+
             <section id="tahun-ajaran" class="content-section hidden">
                 <h2>Data Tahun Ajaran</h2>
                 <div class="search-add-container">
@@ -193,8 +260,14 @@
                     <!-- Cards akan ditambahkan dengan JavaScript -->
                 </div>
             </section>
-            
-            
+
+            <div id="kelas-detail-modal" class="modal" style="display: none;">
+                <div class="modal-content">
+                    <span id="close-detail" class="close">&times;</span>
+                    <h2 id="modal-title"></h2>
+                    <div id="modal-body"></div>
+                </div>
+            </div>
         </main>
     </div>
     <script src="/js/dashboard-admin.js"></script>
@@ -202,6 +275,8 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="/js/data-siswa.js"></script>
     <script src="/js/tahun-ajaran.js"></script>
+    <script src="/js/data-kelas.js"></script>
+    <script src="/js/data-mata_pelajaran.js"></script>
     <script src="/js/data-mading.js"></script>
 
 </body>
