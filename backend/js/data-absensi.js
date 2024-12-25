@@ -65,10 +65,22 @@ function displayKelasHeader(kelasData) {
   const waliKelasInfo = document.createElement('p');
   waliKelasInfo.textContent = `Wali Kelas: ${kelasData.nama_pegawai || 'Wali kelas tidak ada'}`;
 
+  const dateLabel = document.createElement('label');
+  dateLabel.textContent = '';
+  dateLabel.setAttribute('for', 'attendance-date');
+
+  const dateInput = document.createElement('input');
+  dateInput.type = 'date';
+  dateInput.id = 'attendance-date';
+  dateInput.name = 'attendance-date';
+  dateInput.value = new Date().toISOString().split('T')[0]; // Default ke hari ini
+  
   kelasHeader.innerHTML = ''; 
 
   kelasHeader.appendChild(kelasInfo);
   kelasHeader.appendChild(waliKelasInfo);
+  kelasHeader.appendChild(dateLabel);
+  kelasHeader.appendChild(dateInput);
 }
 
 function displayAbsensi(siswaList) {
@@ -117,6 +129,14 @@ function displayAbsensi(siswaList) {
     tableBody.appendChild(row);
   });
 
+  const allHadirRadios = document.querySelectorAll('.hadir-radio');
+  allHadirRadios.forEach(radio => radio.checked = true);
+
+  const selectAllHadirCheckbox = document.getElementById('select-all-hadir');
+  if (selectAllHadirCheckbox) {
+    selectAllHadirCheckbox.checked = true; 
+  }
+
   document.getElementById('select-all-hadir').addEventListener('change', (e) => {
     const radioButtons = document.querySelectorAll('.hadir-radio');
     radioButtons.forEach(button => button.checked = e.target.checked); 
@@ -135,6 +155,17 @@ function displayAbsensi(siswaList) {
   document.getElementById('select-all-alpa').addEventListener('change', (e) => {
     const radioButtons = document.querySelectorAll('.alpa-radio');
     radioButtons.forEach(button => button.checked = e.target.checked); 
+  });
+
+  const allRadios = document.querySelectorAll('input[type="radio"]');
+  allRadios.forEach(radio => {
+    radio.addEventListener('change', () => {
+      const anyHadirUnchecked = Array.from(allHadirRadios).some(radio => !radio.checked);
+      
+      if (selectAllHadirCheckbox) {
+        selectAllHadirCheckbox.checked = !anyHadirUnchecked;
+      }
+    });
   });
 }
 
@@ -159,3 +190,111 @@ async function loadKelasData() {
 }
 
 document.addEventListener("DOMContentLoaded", loadKelasData);
+
+async function fetchAbsensiData(kelasId, date) {
+  try {
+    const response = await fetch(`http://localhost:3000/api/get-attendance?kelasId=${kelasId}&date=${date}`);
+    if (!response.ok) throw new Error("Gagal memuat data absensi");
+
+    const absensiData = await response.json();
+    console.log("Data absensi:", absensiData);
+
+    absensiData.forEach((item) => {
+      const radio = document.querySelector(`input[name="absensi[${item.nisn}]"][value="${item.status}"]`);
+      if (radio) {
+        radio.checked = true;
+      }
+    });
+  } catch (error) {
+    console.error("Error:", error);
+    alert("Gagal memuat data absensi.");
+  }
+}
+
+const saveAbsensi = async () => {
+  const id_kelas = await getIdKelas(); 
+  if (!id_kelas) {
+    alert("ID Kelas tidak ditemukan!");
+    return;
+  }
+
+  const absensiData = []; 
+  const radios = document.querySelectorAll('input[type="radio"]:checked');
+  
+  radios.forEach(radio => {
+    const nisn = radio.name.split('[')[1].split(']')[0]; 
+    const status = radio.value; 
+
+    absensiData.push({
+      nisn: nisn,
+      status: status,
+      id_kelas: id_kelas,
+      date: new Date().toISOString().split('T')[0] 
+    });
+  });
+
+  if (absensiData.length === 0) {
+    alert("Tidak ada data absensi yang dipilih!");
+    return;
+  }
+
+  try {
+    const attendanceResponse = await fetch("http://localhost:3000/api/save-attendance", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        id_kelas: id_kelas,
+        date: new Date().toISOString().split('T')[0]
+      }),
+    });
+
+    if (!attendanceResponse.ok) {
+      const errorDetails = await attendanceResponse.json();
+      console.log("Error details from save-attendance API:", errorDetails);
+      throw new Error(errorDetails.message || "Gagal menyimpan data absensi kelas");
+    }
+
+    const attendanceResult = await attendanceResponse.json();
+    console.log("Response dari API save-attendance:", attendanceResult);
+
+    if (!attendanceResult.insertId) {
+      throw new Error("ID Absensi tidak ditemukan dalam response.");
+    }
+
+    const attendanceId = attendanceResult.insertId; 
+
+    const detailsResponse = await fetch("http://localhost:3000/api/save-attendance-details", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        absensiId: attendanceId,
+        absensiData: absensiData, 
+      }),
+    });
+
+    if (!detailsResponse.ok) {
+      const errorDetails = await detailsResponse.json();
+      console.log("Error details from save-attendance-details API:", errorDetails);
+      throw new Error(errorDetails.message || "Gagal menyimpan data detail absensi");
+    }
+
+    const detailsResult = await detailsResponse.json();
+    alert("Data absensi berhasil disimpan!");
+    console.log(detailsResult); 
+  } catch (error) {
+    console.error("Error:", error);
+    alert("Gagal menyimpan data absensi.");
+  }
+};
+
+async function getIdKelas() {
+  const kelasList = await fetchKelasList(); 
+  if (kelasList && kelasList.length > 0) {
+    return kelasList[0].id; 
+  }
+  return null;
+}
