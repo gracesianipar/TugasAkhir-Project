@@ -183,6 +183,7 @@ const saveAbsensi = async () => {
     if (radio.name && radio.name.includes('[') && radio.name.includes(']')) {
       const nisn = radio.name.split('[')[1].split(']')[0]; 
       const status = radio.value; 
+  
       absensiData.push({
         nisn: nisn,
         status: status,
@@ -272,6 +273,12 @@ async function fetchAbsensiData(kelasId, date) {
       throw new Error("Data absensi tidak valid, tidak ada properti 'attendanceDetails' atau bukan array");
     }
 
+    if (absensiData.length === 0) {
+      console.warn("Tidak ada data absensi ditemukan.");
+      alert("Tidak ada data absensi ditemukan.");
+      return;
+    }
+
     const tbody = document.getElementById('siswa-tbody-absensi');
     tbody.innerHTML = '';  
 
@@ -306,7 +313,6 @@ async function fetchAbsensiData(kelasId, date) {
     alert(`Gagal memuat data absensi: ${error.message}`);
   }
 }
-
 
 async function getIdKelas() {
   const kelasList = await fetchKelasList(); 

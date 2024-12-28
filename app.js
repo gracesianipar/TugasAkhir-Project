@@ -1231,6 +1231,28 @@ app.get('/api/attendance-details', async (req, res) => {
         return res.status(500).json({ message: 'Gagal memuat data absensi', error });
     }
 });
+
+// Contoh route di server (misalnya dengan Express)
+app.put('/api/update-attendance/:id', async (req, res) => {
+  const { id } = req.params;
+  const { nisn, status, date } = req.body;
+
+  try {
+    // Logika untuk memperbarui data absensi berdasarkan ID
+    const query = 'UPDATE absensi SET status = ?, date = ? WHERE id = ? AND nisn = ?';
+    const values = [status, date, id, nisn];
+    const result = await db.execute(query, values);
+
+    if (result.affectedRows > 0) {
+      res.json({ message: "Absensi berhasil diperbarui", id_kelas: result.insertId });
+    } else {
+      res.status(404).json({ message: "Absensi tidak ditemukan" });
+    }
+  } catch (error) {
+    res.status(500).json({ message: "Terjadi kesalahan pada server", error: error.message });
+  }
+});
+
   
 app.listen(PORT, () => {
     console.log(`Server berjalan di http://localhost:${PORT}`);
