@@ -1132,36 +1132,35 @@ app.delete('/api/mata-pelajaran/:id', async (req, res) => {
     }
 });
 
+// Endpoint untuk menyimpan data absensi (tabel attendance)
 app.post('/api/save-attendance', async (req, res) => {
     try {
-      const { id_kelas, date } = req.body;
-  
-      // Debug log untuk data yang diterima
-      console.log("Data yang diterima:", { id_kelas, date });
-  
-      if (!id_kelas || !date) {
-        return res.status(400).json({ message: 'Missing required fields: id_kelas or date' });
-      }
-  
-      // Masukkan data ke tabel attendance
-      await db.query('INSERT INTO attendance (id_kelas, date) VALUES (?, ?)', [id_kelas, date]);
-  
-      // Ambil ID yang baru saja dimasukkan
-      const [rows] = await db.query('SELECT id FROM attendance WHERE id_kelas = ? AND date = ?', [id_kelas, date]);
-  
-      if (rows.length > 0) {
-        const newId = rows[0].id;
-        console.log("ID baru:", newId);
-        return res.json({ insertId: newId });
-      } else {
-        return res.status(400).json({ message: 'Failed to retrieve new attendance ID' });
-      }
+        const { id_kelas, date } = req.body;
+
+        console.log("Data yang diterima:", { id_kelas, date });
+
+        if (!id_kelas || !date) {
+            return res.status(400).json({ message: 'Missing required fields: id_kelas or date' });
+        }
+
+        await db.query('INSERT INTO attendance (id_kelas, date) VALUES (?, ?)', [id_kelas, date]);
+
+        const [rows] = await db.query('SELECT id FROM attendance WHERE id_kelas = ? AND date = ?', [id_kelas, date]);
+
+        if (rows.length > 0) {
+            const newId = rows[0].id;
+            console.log("ID baru:", newId);
+            return res.json({ insertId: newId });
+        } else {
+            return res.status(400).json({ message: 'Failed to retrieve new attendance ID' });
+        }
     } catch (error) {
-      console.error("Error in save-attendance:", error);
-      return res.status(500).json({ message: 'Internal Server Error' });
+        console.error("Error in save-attendance:", error);
+        return res.status(500).json({ message: 'Internal Server Error' });
     }
-});  
-  
+});
+
+// Endpoint untuk menyimpan detail absensi (tabel attendanceDetails)
 app.post('/api/save-attendance-details', async (req, res) => {
     try {
         const { absensiId, absensiData } = req.body;
@@ -1170,13 +1169,11 @@ app.post('/api/save-attendance-details', async (req, res) => {
             return res.status(400).json({ message: 'Missing or invalid data' });
         }
 
-        // Debug log untuk memastikan data yang diterima
         console.log("Absensi ID:", absensiId);
         console.log("Data Absensi:", absensiData);
 
         const values = absensiData.map(item => [absensiId, item.nisn, item.status]);
 
-        // Gunakan query INSERT ... ON DUPLICATE KEY UPDATE
         const [result] = await db.query(
             `
             INSERT INTO attendanceDetails (id_attendance, nisn, status)
@@ -1198,40 +1195,36 @@ app.post('/api/save-attendance-details', async (req, res) => {
     }
 });
 
-app.put('/api/edit-attendance-details', async (req, res) => {
-    const { id_attendance, absensiData } = req.body;
-  
-    try {
-      for (const detail of absensiData) {
-        await db.query(
-          'UPDATE attendanceDetails SET status = ? WHERE id_attendance = ? AND nisn = ?',
-          [detail.status, id_attendance, detail.nisn]
-        );
-      }
-      res.json({ message: 'Data absensi berhasil diperbarui' });
-    } catch (error) {
-      console.error('Gagal memperbarui data absensi:', error);
-      res.status(500).json({ message: 'Gagal memperbarui data absensi' });
-    }
-});  
-
+// Endpoint untuk mengambil data absensi (tabel attendanceDetails) dari data-absensi
 app.get('/api/attendance-details', async (req, res) => {
-    try {
-        const { kelasId } = req.query;
+   try {
+        const { kelasId, date } = req.query;
 
-        if (!kelasId) {
-            return res.status(400).json({ message: 'ID Kelas tidak valid' });
+        // Validasi input
+        if (!kelasId || !date) {
+            return res.status(400).json({ message: 'ID Kelas atau Tanggal tidak valid' });
         }
 
+        console.log("Mengambil data absensi untuk:", { kelasId, date });
+
         const [results] = await db.query(
-            'SELECT * FROM attendanceDetails WHERE id_attendance = ?',
-            [kelasId]
+            `
+            SELECT ad.id_attendance, ad.nisn, ad.status, s.nama_siswa
+            FROM attendanceDetails AS ad
+            INNER JOIN attendance AS a ON ad.id_attendance = a.id
+            LEFT JOIN siswa AS s ON s.nisn = ad.nisn  -- Menggunakan LEFT JOIN
+            WHERE a.id_kelas = ? AND a.date = ?;
+
+            `,
+            [kelasId, date]
         );
 
         if (results.length > 0) {
-            return res.json({ attendanceDetails: results });
+            console.log("Data absensi ditemukan:", results);
+            return res.json({ attendanceDetails: results }); 
         } else {
-            return res.json({ attendanceDetails: [] });
+            console.log("Tidak ada data absensi ditemukan.");
+            return res.json({ attendanceDetails: [] }); 
         }
     } catch (error) {
         console.error("Error fetching attendance details:", error);

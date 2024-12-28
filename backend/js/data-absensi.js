@@ -73,7 +73,7 @@ function displayKelasHeader(kelasData) {
   dateInput.type = 'date';
   dateInput.id = 'attendance-date';
   dateInput.name = 'attendance-date';
-  dateInput.value = new Date().toISOString().split('T')[0]; // Default ke hari ini
+  dateInput.value = new Date().toISOString().split('T')[0]; 
   
   kelasHeader.innerHTML = ''; 
 
@@ -169,48 +169,6 @@ function displayAbsensi(siswaList) {
   });
 }
 
-async function loadKelasData() {
-  console.log("Fetching daftar kelas...");
-  const kelasList = await fetchKelasList(); 
-
-  if (kelasList && kelasList.length > 0) {
-    const kelasId = kelasList[0].id; 
-    console.log("ID kelas yang dipilih:", kelasId);
-
-    if (kelasId) {
-      fetchKelasData(kelasId); 
-    } else {
-      console.log("ID kelas tidak valid.");
-      alert("Tidak ada ID kelas yang ditemukan.");
-    }
-  } else {
-    console.log("Tidak ada data kelas tersedia.");
-    alert("Tidak ada data kelas tersedia.");
-  }
-}
-
-document.addEventListener("DOMContentLoaded", loadKelasData);
-
-async function fetchAbsensiData(kelasId, date) {
-  try {
-    const response = await fetch(`http://localhost:3000/api/get-attendance?kelasId=${kelasId}&date=${date}`);
-    if (!response.ok) throw new Error("Gagal memuat data absensi");
-
-    const absensiData = await response.json();
-    console.log("Data absensi:", absensiData);
-
-    absensiData.forEach((item) => {
-      const radio = document.querySelector(`input[name="absensi[${item.nisn}]"][value="${item.status}"]`);
-      if (radio) {
-        radio.checked = true;
-      }
-    });
-  } catch (error) {
-    console.error("Error:", error);
-    alert("Gagal memuat data absensi.");
-  }
-}
-
 const saveAbsensi = async () => {
   const id_kelas = await getIdKelas(); 
   if (!id_kelas) {
@@ -285,11 +243,61 @@ const saveAbsensi = async () => {
     const detailsResult = await detailsResponse.json();
     alert("Data absensi berhasil disimpan!");
     console.log(detailsResult); 
+
+    fetchAbsensiData(id_kelas, new Date().toISOString().split('T')[0]); 
+
   } catch (error) {
     console.error("Error:", error);
     alert("Gagal menyimpan data absensi.");
   }
 };
+
+async function fetchAbsensiData(kelasId, date) {
+  console.log(`Fetching attendance data for kelasId=${kelasId}, date=${date}`); 
+  
+  try {
+    const response = await fetch(`http://localhost:3000/api/attendance-details?kelasId=${kelasId}&date=${date}`);
+    
+    if (!response.ok) throw new Error("Gagal memuat data absensi");
+
+    const responseData = await response.json();
+
+    const absensiData = responseData.attendanceDetails;
+
+    if (!Array.isArray(absensiData)) {
+      throw new Error("Data absensi tidak valid, tidak ada properti 'attendanceDetails' atau bukan array");
+    }
+
+    console.log("Data absensi:", absensiData); 
+
+    if (absensiData.length === 0) {
+      console.warn("Tidak ada data absensi ditemukan.");
+      alert("Tidak ada data absensi ditemukan.");
+      return;
+    }
+
+    const tbody = document.getElementById('siswa-tbody-absensi');
+    tbody.innerHTML = '';  
+
+    absensiData.forEach((item, index) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = 
+      `
+        <td>${index + 1}</td>
+        <td>${item.nama_siswa}</td>
+        <td>${item.nisn}</td>
+        <td><input type="radio" name="absensi-${item.nisn}" data-nisn="${item.nisn}" data-status="Hadir" ${item.status === 'Hadir' ? 'checked' : ''}></td>
+        <td><input type="radio" name="absensi-${item.nisn}" data-nisn="${item.nisn}" data-status="Izin" ${item.status === 'Izin' ? 'checked' : ''}></td>
+        <td><input type="radio" name="absensi-${item.nisn}" data-nisn="${item.nisn}" data-status="Sakit" ${item.status === 'Sakit' ? 'checked' : ''}></td>
+        <td><input type="radio" name="absensi-${item.nisn}" data-nisn="${item.nisn}" data-status="Alpa" ${item.status === 'Alpa' ? 'checked' : ''}></td>
+      `;
+      tbody.appendChild(tr);
+    });
+  } catch (error) {
+    console.error("Error saat memuat data absensi:", error);
+    alert("Gagal memuat data absensi: ${error.message}");
+  }
+}
 
 async function getIdKelas() {
   const kelasList = await fetchKelasList(); 
@@ -298,3 +306,34 @@ async function getIdKelas() {
   }
   return null;
 }
+
+async function loadKelasData() {
+  console.log("Fetching daftar kelas...");
+
+  try {
+      const kelasList = await fetchKelasList();
+
+      if (Array.isArray(kelasList) && kelasList.length > 0) {
+          const kelasId = kelasList[0].id; 
+          console.log("ID kelas yang dipilih:", kelasId);
+
+          if (kelasId) {
+              await fetchKelasData(kelasId);
+
+              const todayDate = new Date().toLocaleDateString('en-CA'); 
+              await fetchAbsensiData(kelasId, todayDate);
+          } else {
+              console.warn("ID kelas tidak valid.");
+              alert("Tidak ada ID kelas yang ditemukan.");
+          }
+      } else {
+          console.warn("Tidak ada data kelas tersedia.");
+          alert("Tidak ada data kelas tersedia.");
+      }
+  } catch (error) {
+      console.error("Error saat memuat data kelas:", error);
+      alert("Gagal memuat data kelas: ${error.message}");
+  }
+}
+
+document.addEventListener("DOMContentLoaded", loadKelasData);
