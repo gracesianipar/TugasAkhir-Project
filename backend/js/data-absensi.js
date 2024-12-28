@@ -180,15 +180,18 @@ const saveAbsensi = async () => {
   const radios = document.querySelectorAll('input[type="radio"]:checked');
   
   radios.forEach(radio => {
-    const nisn = radio.name.split('[')[1].split(']')[0]; 
-    const status = radio.value; 
-
-    absensiData.push({
-      nisn: nisn,
-      status: status,
-      id_kelas: id_kelas,
-      date: new Date().toISOString().split('T')[0] 
-    });
+    if (radio.name && radio.name.includes('[') && radio.name.includes(']')) {
+      const nisn = radio.name.split('[')[1].split(']')[0]; 
+      const status = radio.value; 
+      absensiData.push({
+        nisn: nisn,
+        status: status,
+        id_kelas: id_kelas,
+        date: new Date().toISOString().split('T')[0]
+      });
+    } else {
+      console.warn(`Radio button tidak memiliki atribut name yang sesuai: ${radio.name}`);
+    }
   });
 
   if (absensiData.length === 0) {
@@ -244,7 +247,7 @@ const saveAbsensi = async () => {
     alert("Data absensi berhasil disimpan!");
     console.log(detailsResult); 
 
-    fetchAbsensiData(id_kelas, new Date().toISOString().split('T')[0]); 
+    fetchAbsensiData(id_kelas, new Date().toISOString().split('T')[0]);
 
   } catch (error) {
     console.error("Error:", error);
@@ -253,36 +256,31 @@ const saveAbsensi = async () => {
 };
 
 async function fetchAbsensiData(kelasId, date) {
-  console.log(`Fetching attendance data for kelasId=${kelasId}, date=${date}`); 
-  
+  console.log(`Fetching attendance data for kelasId=${kelasId}, date=${date}`);
+
   try {
     const response = await fetch(`http://localhost:3000/api/attendance-details?kelasId=${kelasId}&date=${date}`);
     
     if (!response.ok) throw new Error("Gagal memuat data absensi");
 
     const responseData = await response.json();
-
     const absensiData = responseData.attendanceDetails;
+
+    console.log("Data absensi fetched:", absensiData);
 
     if (!Array.isArray(absensiData)) {
       throw new Error("Data absensi tidak valid, tidak ada properti 'attendanceDetails' atau bukan array");
     }
 
-    console.log("Data absensi:", absensiData); 
-
-    if (absensiData.length === 0) {
-      console.warn("Tidak ada data absensi ditemukan.");
-      alert("Tidak ada data absensi ditemukan.");
-      return;
-    }
-
     const tbody = document.getElementById('siswa-tbody-absensi');
     tbody.innerHTML = '';  
+
+    let semuaHadir = true;
 
     absensiData.forEach((item, index) => {
       const tr = document.createElement('tr');
       tr.innerHTML = 
-      `
+      ` 
         <td>${index + 1}</td>
         <td>${item.nama_siswa}</td>
         <td>${item.nisn}</td>
@@ -292,12 +290,23 @@ async function fetchAbsensiData(kelasId, date) {
         <td><input type="radio" name="absensi-${item.nisn}" data-nisn="${item.nisn}" data-status="Alpa" ${item.status === 'Alpa' ? 'checked' : ''}></td>
       `;
       tbody.appendChild(tr);
+
+      if (item.status !== 'Hadir') {
+        semuaHadir = false;
+      }
     });
+
+    const selectAllHadirCheckbox = document.getElementById('select-all-hadir'); 
+    if (selectAllHadirCheckbox) {
+      selectAllHadirCheckbox.checked = semuaHadir;
+    }
+
   } catch (error) {
     console.error("Error saat memuat data absensi:", error);
-    alert("Gagal memuat data absensi: ${error.message}");
+    alert(`Gagal memuat data absensi: ${error.message}`);
   }
 }
+
 
 async function getIdKelas() {
   const kelasList = await fetchKelasList(); 
