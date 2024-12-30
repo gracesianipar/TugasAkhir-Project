@@ -85,7 +85,7 @@ function displayKelasHeader(kelasData) {
 
 function displayAbsensi(siswaList) {
   const tableBody = document.getElementById('siswa-tbody-absensi');
-  tableBody.innerHTML = ''; 
+  tableBody.innerHTML = '';  // Clear any existing rows
 
   siswaList.forEach((siswa, index) => {
     const row = document.createElement('tr');
@@ -200,6 +200,9 @@ const saveAbsensi = async () => {
     return;
   }
 
+  // Hapus duplikat sebelum menyimpan
+  const uniqueAbsensiData = removeDuplicateAbsensi(absensiData);
+
   try {
     const attendanceResponse = await fetch("http://localhost:3000/api/save-attendance", {
       method: "POST",
@@ -234,7 +237,7 @@ const saveAbsensi = async () => {
       },
       body: JSON.stringify({
         absensiId: attendanceId,
-        absensiData: absensiData, 
+        absensiData: uniqueAbsensiData, 
       }),
     });
 
@@ -254,6 +257,60 @@ const saveAbsensi = async () => {
     console.error("Error:", error);
     alert("Gagal menyimpan data absensi.");
   }
+};
+
+async function updateStatusAbsensi(absensiId, absensiData) {
+  try {
+      // Validasi input
+      if (!absensiId || !Array.isArray(absensiData) || absensiData.length === 0) {
+          throw new Error('Invalid absensiId or absensiData');
+      }
+
+      // Hapus data duplikat
+      const uniqueAbsensiData = removeDuplicateAbsensi(absensiData);
+
+      // Memetakan data absensi untuk update
+      const values = uniqueAbsensiData.map(item => [item.status, absensiId, item.nisn]);
+
+      // Query untuk memperbarui status absensi di database
+      const [result] = await db.query(
+          `
+          UPDATE attendanceDetails
+          SET status = ?
+          WHERE id_attendance = ? AND nisn = ?
+          `,
+          values
+      );
+
+      // Mengecek apakah ada baris yang terpengaruh
+      if (result.affectedRows === 0) {
+          throw new Error('No matching records found to update');
+      }
+
+      return { success: true, message: 'Attendance details updated successfully', result };
+  } catch (error) {
+      console.error('Error updating attendance details:', error);
+      return { success: false, message: error.message, error };
+  }
+}
+
+// Fungsi untuk menghapus duplikasi data berdasarkan nisn
+const removeDuplicateAbsensi = (data) => {
+  // Gunakan Map untuk memastikan data unik berdasarkan NISN
+  const uniqueData = new Map();
+
+  data.forEach(item => {
+    // Gunakan NISN sebagai kunci untuk menyimpan item unik
+    if (!uniqueData.has(item.nisn)) {
+      uniqueData.set(item.nisn, item);
+    } else {
+      // Jika sudah ada, ambil status yang terbaru, atau sesuaikan sesuai kebutuhan
+      uniqueData.set(item.nisn, item); // Bisa ditambahkan logika jika diperlukan
+    }
+  });
+
+  // Kembalikan data yang sudah unik
+  return Array.from(uniqueData.values());
 };
 
 async function fetchAbsensiData(kelasId, date) {
@@ -278,23 +335,36 @@ async function fetchAbsensiData(kelasId, date) {
       alert("Tidak ada data absensi ditemukan.");
       return;
     }
+     
+    // Hapus data duplikat
+    const uniqueAbsensiData = removeDuplicateAbsensi(absensiData);
+
+    console.log("Data absensi setelah menghapus duplikasi:", uniqueAbsensiData);
 
     const tbody = document.getElementById('siswa-tbody-absensi');
     tbody.innerHTML = '';  
 
     let semuaHadir = true;
 
-    absensiData.forEach((item, index) => {
+    uniqueAbsensiData.forEach((item, index) => {
       const tr = document.createElement('tr');
       tr.innerHTML = 
       ` 
         <td>${index + 1}</td>
         <td>${item.nama_siswa}</td>
         <td>${item.nisn}</td>
-        <td><input type="radio" name="absensi-${item.nisn}" data-nisn="${item.nisn}" data-status="Hadir" ${item.status === 'Hadir' ? 'checked' : ''}></td>
-        <td><input type="radio" name="absensi-${item.nisn}" data-nisn="${item.nisn}" data-status="Izin" ${item.status === 'Izin' ? 'checked' : ''}></td>
-        <td><input type="radio" name="absensi-${item.nisn}" data-nisn="${item.nisn}" data-status="Sakit" ${item.status === 'Sakit' ? 'checked' : ''}></td>
-        <td><input type="radio" name="absensi-${item.nisn}" data-nisn="${item.nisn}" data-status="Alpa" ${item.status === 'Alpa' ? 'checked' : ''}></td>
+        <td>
+            <input type="radio" name="absensi[${item.nisn}]" data-nisn="${item.nisn}" data-status="Hadir" value="Hadir" ${item.status === 'Hadir' ? 'checked' : ''}>
+        </td>
+        <td>
+            <input type="radio" name="absensi[${item.nisn}]" data-nisn="${item.nisn}" data-status="Izin" value="Izin" ${item.status === 'Izin' ? 'checked' : ''}>
+        </td>
+        <td>
+            <input type="radio" name="absensi[${item.nisn}]" data-nisn="${item.nisn}" data-status="Sakit" value="Sakit" ${item.status === 'Sakit' ? 'checked' : ''}>
+        </td>
+        <td>
+            <input type="radio" name="absensi[${item.nisn}]" data-nisn="${item.nisn}" data-status="Alpa" value="Alpa" ${item.status === 'Alpa' ? 'checked' : ''}>
+        </td>
       `;
       tbody.appendChild(tr);
 
@@ -333,8 +403,7 @@ async function loadKelasData() {
           console.log("ID kelas yang dipilih:", kelasId);
 
           if (kelasId) {
-              await fetchKelasData(kelasId);
-
+              await fetchKelasData(kelasId);  // Make sure fetchKelasData is only called once
               const todayDate = new Date().toLocaleDateString('en-CA'); 
               await fetchAbsensiData(kelasId, todayDate);
           } else {

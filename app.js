@@ -1232,27 +1232,42 @@ app.get('/api/attendance-details', async (req, res) => {
     }
 });
 
-// Contoh route di server (misalnya dengan Express)
-app.put('/api/update-attendance/:id', async (req, res) => {
-  const { id } = req.params;
-  const { nisn, status, date } = req.body;
+app.put('/api/update-attendance-details', async (req, res) => {
+    const { absensiId, absensiData } = req.body;
 
-  try {
-    // Logika untuk memperbarui data absensi berdasarkan ID
-    const query = 'UPDATE absensi SET status = ?, date = ? WHERE id = ? AND nisn = ?';
-    const values = [status, date, id, nisn];
-    const result = await db.execute(query, values);
+    // Memanggil fungsi untuk memperbarui status absensi
+    const result = await updateStatusAbsensi(absensiId, absensiData);
 
-    if (result.affectedRows > 0) {
-      res.json({ message: "Absensi berhasil diperbarui", id_kelas: result.insertId });
+    if (result.success) {
+        return res.json(result);
     } else {
-      res.status(404).json({ message: "Absensi tidak ditemukan" });
+        return res.status(500).json({ message: result.message, error: result.error });
     }
-  } catch (error) {
-    res.status(500).json({ message: "Terjadi kesalahan pada server", error: error.message });
-  }
 });
-
+  
+// Misalnya menggunakan Express.js di server
+app.get('/api/get-attendance-id', async (req, res) => {
+    const { id_kelas, date } = req.query;
+  
+    if (!id_kelas || !date) {
+      return res.status(400).json({ message: "ID Kelas dan Tanggal diperlukan" });
+    }
+  
+    try {
+      // Query untuk mendapatkan ID Absensi berdasarkan ID Kelas dan Tanggal
+      const result = await db.query('SELECT id_absensi FROM absensi WHERE id_kelas = ? AND date = ?', [id_kelas, date]);
+  
+      if (result.length === 0) {
+        return res.status(404).json({ message: "Absensi tidak ditemukan untuk kelas dan tanggal ini" });
+      }
+  
+      // Mengembalikan ID Absensi pertama yang ditemukan
+      return res.json({ absensiId: result[0].id_absensi });
+    } catch (error) {
+      console.error("Error saat mengambil ID Absensi:", error);
+      return res.status(500).json({ message: "Gagal mengambil ID Absensi" });
+    }
+  });  
   
 app.listen(PORT, () => {
     console.log(`Server berjalan di http://localhost:${PORT}`);
