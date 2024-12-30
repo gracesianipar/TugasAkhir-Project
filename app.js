@@ -80,7 +80,7 @@ app.get('/login', (req, res) => {
     res.sendFile(path.join(__dirname, 'frontend', 'html', 'login.html'));
 });
 
-app.post('/api/login', async(req, res) => {
+app.post('/api/login', async (req, res) => {
     const { username, password, login_sebagai } = req.body;
     try {
         let query = '';
@@ -136,19 +136,31 @@ app.post('/api/login', async(req, res) => {
                 });
             } else if (login_sebagai === 'Siswa' && password === user[0].password) {
                 req.session.user = {
-                    id: user[0].id,
-                    name: user[0].name,
-                    login_sebagai: login_sebagai
+                    id: user[0].nisn, // Pastikan nama kolom sesuai
+                    name: user[0].nama_siswa, // Sesuaikan dengan kolom di tabel siswa
+                    role: 'Siswa', // Tambahkan role untuk siswa
+                    login_sebagai: login_sebagai,
+                    tempat_lahir: user[0].tempat_lahir,
+                    tanggal_lahir: user[0].tanggal_lahir,
+                    nik: user[0].nik,
+
                 };
                 console.log("Session after login (Siswa):", req.session.user);
                 res.status(200).json({
                     message: 'Login berhasil',
                     user: {
                         id: user[0].id,
-                        name: user[0].name,
-                        login_sebagai: login_sebagai
+                        name: user[0].nama_siswa,
+                        role: 'Siswa', // Tambahkan role untuk siswa
+                        login_sebagai: login_sebagai,
+                        tempat_lahir: user[0].tempat_lahir,
+                        tanggal_lahir: user[0].tanggal_lahir,
+                        nik: user[0].nik,
+
                     }
                 });
+            
+            
             } else {
                 res.status(401).json({ message: 'Password salah' });
             }
@@ -245,6 +257,27 @@ app.get('/api/session', (req, res) => {
         });
     } else {
         res.status(401).json({ message: 'User not logged in' });
+    }
+});
+
+app.get('/api/session-siswa', (req, res) => {
+    console.log("Session Data:", req.session.user);  // Debug log untuk memastikan sesi ada
+
+    if (req.session.user) {
+        const formatDate = (dateString) => {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('id-ID');
+        };
+
+        res.json({
+            name: req.session.user.name || 'Tidak tersedia',
+            tempat_lahir: req.session.user.tempat_lahir || 'Tidak tersedia',
+            tanggal_lahir: req.session.user.tanggal_lahir ? formatDate(req.session.user.tanggal_lahir) : 'Tidak tersedia',
+            nisn: req.session.user.nisn || 'Tidak tersedia',
+            nisn: req.session.user.id || 'Tidak tersedia',
+        });
+    } else {
+        res.status(401).json({ message: 'User not logged in' });  // Pastikan sesi benar-benar ada
     }
 });
 
@@ -1244,31 +1277,44 @@ app.put('/api/update-attendance-details', async (req, res) => {
         return res.status(500).json({ message: result.message, error: result.error });
     }
 });
-  
-// Misalnya menggunakan Express.js di server
-app.get('/api/get-attendance-id', async (req, res) => {
-    const { id_kelas, date } = req.query;
-  
-    if (!id_kelas || !date) {
-      return res.status(400).json({ message: "ID Kelas dan Tanggal diperlukan" });
-    }
-  
+
+//route untuk menampilkan absensi per siswa yg login yang sudah guru wali kelas simpan
+app.get('/api/attendance-details-siswa', async (req, res) => {
     try {
-      // Query untuk mendapatkan ID Absensi berdasarkan ID Kelas dan Tanggal
-      const result = await db.query('SELECT id_absensi FROM absensi WHERE id_kelas = ? AND date = ?', [id_kelas, date]);
-  
-      if (result.length === 0) {
-        return res.status(404).json({ message: "Absensi tidak ditemukan untuk kelas dan tanggal ini" });
-      }
-  
-      // Mengembalikan ID Absensi pertama yang ditemukan
-      return res.json({ absensiId: result[0].id_absensi });
-    } catch (error) {
-      console.error("Error saat mengambil ID Absensi:", error);
-      return res.status(500).json({ message: "Gagal mengambil ID Absensi" });
-    }
-  });  
-  
+         const { nisn, date } = req.query;
+ 
+         // Validasi input
+         if (!nisn || !date) {
+             return res.status(400).json({ message: 'NISN atau Tanggal tidak valid' });
+         }
+ 
+         console.log("Mengambil data absensi untuk:", { nisn, date });
+ 
+         // Query untuk mengambil data absensi berdasarkan NISN dan Tanggal
+         const [results] = await db.query(
+             `
+             SELECT ad.id_attendance, ad.nisn, ad.status, s.nama_siswa
+             FROM attendanceDetails AS ad
+             INNER JOIN attendance AS a ON ad.id_attendance = a.id
+             LEFT JOIN siswa AS s ON s.nisn = ad.nisn
+             WHERE ad.nisn = ? AND a.date = ?;
+             `,
+             [nisn, date]  // Menyaring data berdasarkan nisn dan date
+         );
+ 
+         if (results.length > 0) {
+             console.log("Data absensi ditemukan:", results);
+             return res.json({ attendanceDetails: results });
+         } else {
+             console.log("Tidak ada data absensi ditemukan.");
+             return res.json({ attendanceDetails: [] });
+         }
+     } catch (error) {
+         console.error("Error fetching attendance details:", error);
+         return res.status(500).json({ message: 'Gagal memuat data absensi', error });
+     }
+ }); 
+
 app.listen(PORT, () => {
     console.log(`Server berjalan di http://localhost:${PORT}`);
 });

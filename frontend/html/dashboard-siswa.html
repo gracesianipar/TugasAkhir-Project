@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guru Wali Kelas</title>
+</head>
+<body>
+    <!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="/css/dashboard-admin.css">
+    <link rel="stylesheet" href="/css/data-pegawai.css">
+
+
+    <!-- SweetAlert2 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <!-- SweetAlert2 JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+</head>
+
+<body>
+    <header>
+        <h1>Siswa</h1>
+        <div class="profile">
+            <i class="fas fa-user-circle" id="profile-icon"></i>  <!-- ID untuk ikon -->
+            <span id="employee-name-header" class="employee-name">Tamu</span>
+        </div>
+    </header>
+    
+    <div class="dashboard">
+        <aside class="sidebar">
+            <ul>
+                <li><a href="#" data-target="siswa-profil" class="active">Profil</a></li>
+                <li><a href="#" data-target="nilai"> Nilai</a></li>
+                <li><a href="#" data-target="absensi">Absensi</a></li>
+
+            </ul>
+            
+            </aside>
+            <main>
+                <div class="welcome-message">
+                    <h2>Selamat Datang, <span id="employee-name-message" class="employee-name">Tamu</span></h2>
+                </div>
+                
+                <section id="siswa-profile" class="content-section hidden">
+                    <div class="profile-container">
+                        <div class="profile-picture">
+                            <!-- Menampilkan huruf pertama dari nama pengguna -->
+                            <span id="profile-initial">T</span>
+                            <i id="camera-icon" class="fas fa-camera"></i>                    </div>
+                        <hr class="profile-divider">
+                        <div class="profile-details">
+                            <div class="bio-item">
+                                <strong>Nama</strong> <span id="biodata-name">Tidak tersedia</span>
+                            </div>
+                            <div class="bio-item">
+                                <strong>Tempat, Tanggal Lahir</strong> <span id="biodata-ttl">Tidak tersedia</span>
+                            </div>
+                            <div class="bio-item">
+                                <strong>Jenis Kelamin</strong> <span id="biodata-jenis-kelamin">Tidak tersedia</span>
+                            </div>
+                            <div class="bio-item">
+                                <strong>Alamat</strong> <span id="biodata-alamat">Tidak tersedia</span>
+                            </div>
+                            <div class="bio-item">
+                                <strong>Agama</strong> <span id="biodata-agama">Tidak tersedia</span>
+                            </div>
+                            <div class="bio-item">
+                                <strong>Nama Ayah</strong> <span id="biodata-nama-ayah">Tidak tersedia</span>
+                            </div>
+                            <div class="bio-item">
+                                <strong>Nama Ibu</strong> <span id="biodata-nama-ibu">Tidak tersedia</span>
+                            </div>
+                            <div class="bio-item">
+                                <strong>No. HP Orang Tua</strong> <span id="biodata-no-hp-ortu">Tidak tersedia</span>
+                            </div>
+                            <div class="bio-item">
+                                <strong>Email</strong> <span id="biodata-email">Tidak tersedia</span>
+                            </div>
+                            <div class="bio-item">
+                                <strong>NIK</strong> <span id="biodata-nik">Tidak tersedia</span>
+                            </div>
+                            <div class="bio-item">
+                                <strong>Anak Ke</strong> <span id="biodata-anak-ke">Tidak tersedia</span>
+                            </div>
+                            <div class="bio-item">
+                                <strong>Status</strong> <span id="biodata-status">Tidak tersedia</span>
+                            </div>
+                            <div class="bio-item">
+                                <strong>Tanggal Masuk</strong> <span id="biodata-tanggal-masuk">Tidak tersedia</span>
+                            </div>
+                            <div class="bio-item">
+                                <strong>Last Password Update</strong> <span id="biodata-last-password-update">Tidak tersedia</span>
+                            </div>
+                            <div class="bio-item">
+                                <strong>ID Kelas</strong> <span id="biodata-id-kelas">Tidak tersedia</span>
+                            </div>
+                        </div>
+                        
+                    </div>
+                </section>
+
+                <section id="absensi" class="content-section hidden">
+                  <h2>Absensi</h2>
+                  <div id="siswa-header"></div> 
+                  <table id="absensi-table">
+                      <thead>
+                          <tr>
+                              <th>Tanggal</th>
+                              <th>Status</th>
+                          </tr>
+                      </thead>
+                      <tbody>
+                          <!-- Absensi data akan ditambahkan di sini -->
+                      </tbody>
+                  </table>
+              </section>              
+                
+               
+            </main>
+    </div>
+    <script src="/js/dahsboard-siswa.js"></script>
+</body>
+
+</html>
+
+
+</body>
+</html>
