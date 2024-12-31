@@ -176,7 +176,8 @@ async function fetchSiswaData(nisn) {
 
 async function fetchAbsensiDataBySiswa() {
   const nisn = await getUserNISN();
-  const dateInput = getSelectedDate() || getCurrentDate(); // Gunakan tanggal saat ini jika input kosong
+  const today = getCurrentDate(); // Tanggal hari ini
+  const yesterday = getPreviousDate(); // Tanggal kemarin
 
   if (!nisn) {
     alert('NISN tidak ditemukan. Harap periksa sesi pengguna.');
@@ -184,22 +185,50 @@ async function fetchAbsensiDataBySiswa() {
   }
 
   try {
-    const absensiResponse = await fetch(`/api/attendance-details-siswa?nisn=${nisn}&date=${dateInput}`);
-    if (!absensiResponse.ok) throw new Error('Gagal memuat data absensi');
+    // Fetch data untuk hari ini dan kemarin
+    const todayResponse = await fetch(`/api/attendance-details-siswa?nisn=${nisn}&date=${today}`);
+    const yesterdayResponse = await fetch(`/api/attendance-details-siswa?nisn=${nisn}&date=${yesterday}`);
 
-    const absensiData = await absensiResponse.json();
-    console.log('Data absensi siswa:', absensiData);
+    if (!todayResponse.ok || !yesterdayResponse.ok) throw new Error('Gagal memuat data absensi.');
 
-    if (absensiData.attendanceDetails.length === 0) {
+    const todayData = await todayResponse.json();
+    const yesterdayData = await yesterdayResponse.json();
+
+    console.log('Data absensi hari ini:', todayData);
+    console.log('Data absensi kemarin:', yesterdayData);
+
+    // Gabungkan data absensi
+    const allAttendance = [
+      ...yesterdayData.attendanceDetails.map((entry) => ({
+        ...entry,
+        date: yesterday, // Pastikan tanggal kemarin disematkan
+      })),
+      ...todayData.attendanceDetails.map((entry) => ({
+        ...entry,
+        date: today, // Pastikan tanggal hari ini disematkan
+      })),
+    ];
+
+    if (allAttendance.length === 0) {
       alert('Tidak ada data absensi ditemukan.');
       return;
     }
 
-    displayAbsensi(absensiData.attendanceDetails, dateInput); // Tambahkan tanggal ke displayAbsensi
+    displayAbsensi(allAttendance); // Tampilkan semua data
   } catch (error) {
     console.error('Error saat memuat data absensi:', error);
     alert(`Gagal memuat data absensi: ${error.message}`);
   }
+}
+
+// Fungsi untuk mendapatkan tanggal kemarin
+function getPreviousDate() {
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const year = yesterday.getFullYear();
+  const month = String(yesterday.getMonth() + 1).padStart(2, '0'); // Bulan dimulai dari 0
+  const day = String(yesterday.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 function displayError(message) {
@@ -219,22 +248,22 @@ function getCurrentDate() {
 }
 
 
-function displayAbsensi(absensiData, defaultDate) {
+function displayAbsensi(absensiData) {
   const tableBody = document.getElementById('absensi-table').getElementsByTagName('tbody')[0];
-  tableBody.innerHTML = ''; // Clear any existing rows
+  tableBody.innerHTML = ''; // Bersihkan semua baris sebelumnya
 
   absensiData.forEach((data) => {
     const row = document.createElement('tr');
 
     const dateCell = document.createElement('td');
-    dateCell.textContent = data.date || defaultDate; // Gunakan tanggal default jika tidak tersedia
+    dateCell.textContent = data.date; // Tanggal dari data API
     row.appendChild(dateCell);
 
     const statusCell = document.createElement('td');
-    statusCell.textContent = data.status; // Pastikan `data.status` berisi status yang benar
+    statusCell.textContent = data.status; // Status dari data API
     row.appendChild(statusCell);
 
-    tableBody.appendChild(row); // Menambahkan baris ke dalam tabel
+    tableBody.appendChild(row); // Tambahkan baris ke tabel
   });
 }
 
