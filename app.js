@@ -1281,39 +1281,39 @@ app.put('/api/update-attendance-details', async (req, res) => {
 //route untuk menampilkan absensi per siswa yg login yang sudah guru wali kelas simpan
 app.get('/api/attendance-details-siswa', async (req, res) => {
     try {
-         const { nisn, date } = req.query;
- 
-         // Validasi input
-         if (!nisn || !date) {
-             return res.status(400).json({ message: 'NISN atau Tanggal tidak valid' });
-         }
- 
-         console.log("Mengambil data absensi untuk:", { nisn, date });
- 
-         // Query untuk mengambil data absensi berdasarkan NISN dan Tanggal
-         const [results] = await db.query(
-             `
-             SELECT ad.id_attendance, ad.nisn, ad.status, s.nama_siswa
-             FROM attendanceDetails AS ad
-             INNER JOIN attendance AS a ON ad.id_attendance = a.id
-             LEFT JOIN siswa AS s ON s.nisn = ad.nisn
-             WHERE ad.nisn = ? AND a.date = ?;
-             `,
-             [nisn, date]  // Menyaring data berdasarkan nisn dan date
-         );
- 
-         if (results.length > 0) {
-             console.log("Data absensi ditemukan:", results);
-             return res.json({ attendanceDetails: results });
-         } else {
-             console.log("Tidak ada data absensi ditemukan.");
-             return res.json({ attendanceDetails: [] });
-         }
-     } catch (error) {
-         console.error("Error fetching attendance details:", error);
-         return res.status(500).json({ message: 'Gagal memuat data absensi', error });
-     }
- }); 
+        const { nisn, date } = req.query;
+
+        if (!nisn || !date) {
+            return res.status(400).json({ message: 'NISN atau Tanggal tidak valid' });
+        }
+
+        console.log("Mengambil data absensi untuk:", { nisn, date });
+
+        const [results] = await db.query(
+            `
+            SELECT ad.id_attendance, ad.nisn, ad.status, s.nama_siswa
+FROM attendanceDetails AS ad
+INNER JOIN attendance AS a ON ad.id_attendance = a.id
+LEFT JOIN siswa AS s ON s.nisn = ad.nisn
+WHERE ad.nisn = ? AND a.date = ?
+ORDER BY a.date DESC, ad.id DESC
+LIMIT 1;
+            `,
+            [nisn, date]  
+        );
+
+        if (results.length > 0) {
+            console.log("Data absensi ditemukan:", results);
+            return res.json({ attendanceDetails: results });
+        } else {
+            console.log("Tidak ada data absensi ditemukan.");
+            return res.json({ attendanceDetails: [] });
+        }
+    } catch (error) {
+        console.error("Error fetching attendance details:", error);
+        return res.status(500).json({ message: 'Gagal memuat data absensi', error });
+    }
+});
 
 app.listen(PORT, () => {
     console.log(`Server berjalan di http://localhost:${PORT}`);

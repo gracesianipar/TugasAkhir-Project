@@ -85,7 +85,7 @@ function displayKelasHeader(kelasData) {
 
 function displayAbsensi(siswaList) {
   const tableBody = document.getElementById('siswa-tbody-absensi');
-  tableBody.innerHTML = '';  // Clear any existing rows
+  tableBody.innerHTML = '';  
 
   siswaList.forEach((siswa, index) => {
     const row = document.createElement('tr');
@@ -200,7 +200,7 @@ const saveAbsensi = async () => {
     return;
   }
 
-  // Hapus duplikat sebelum menyimpan
+  // menghapus duplikat data sebelum menyimpan
   const uniqueAbsensiData = removeDuplicateAbsensi(absensiData);
 
   try {
@@ -261,18 +261,17 @@ const saveAbsensi = async () => {
 
 async function updateStatusAbsensi(absensiId, absensiData) {
   try {
-      // Validasi input
       if (!absensiId || !Array.isArray(absensiData) || absensiData.length === 0) {
           throw new Error('Invalid absensiId or absensiData');
       }
 
-      // Hapus data duplikat
+      // menghapus data duplikat
       const uniqueAbsensiData = removeDuplicateAbsensi(absensiData);
 
-      // Memetakan data absensi untuk update
+      // data absensi untuk update
       const values = uniqueAbsensiData.map(item => [item.status, absensiId, item.nisn]);
 
-      // Query untuk memperbarui status absensi di database
+      // memperbarui status absensi di database
       const [result] = await db.query(
           `
           UPDATE attendanceDetails
@@ -282,7 +281,7 @@ async function updateStatusAbsensi(absensiId, absensiData) {
           values
       );
 
-      // Mengecek apakah ada baris yang terpengaruh
+      // mengecek apakah ada baris yang terpengaruh
       if (result.affectedRows === 0) {
           throw new Error('No matching records found to update');
       }
@@ -294,22 +293,19 @@ async function updateStatusAbsensi(absensiId, absensiData) {
   }
 }
 
-// Fungsi untuk menghapus duplikasi data berdasarkan nisn
+// fungsi untuk menghapus duplikasi data berdasarkan nisn
 const removeDuplicateAbsensi = (data) => {
-  // Gunakan Map untuk memastikan data unik berdasarkan NISN
   const uniqueData = new Map();
 
   data.forEach(item => {
-    // Gunakan NISN sebagai kunci untuk menyimpan item unik
     if (!uniqueData.has(item.nisn)) {
       uniqueData.set(item.nisn, item);
     } else {
-      // Jika sudah ada, ambil status yang terbaru, atau sesuaikan sesuai kebutuhan
-      uniqueData.set(item.nisn, item); // Bisa ditambahkan logika jika diperlukan
+      uniqueData.set(item.nisn, item); 
     }
   });
 
-  // Kembalikan data yang sudah unik
+  // mengembalikan data yang sudah unik
   return Array.from(uniqueData.values());
 };
 
@@ -336,7 +332,7 @@ async function fetchAbsensiData(kelasId, date) {
       return;
     }
      
-    // Hapus data duplikat
+    // menghapus data duplikat
     const uniqueAbsensiData = removeDuplicateAbsensi(absensiData);
 
     console.log("Data absensi setelah menghapus duplikasi:", uniqueAbsensiData);
@@ -403,7 +399,7 @@ async function loadKelasData() {
           console.log("ID kelas yang dipilih:", kelasId);
 
           if (kelasId) {
-              await fetchKelasData(kelasId);  // Make sure fetchKelasData is only called once
+              await fetchKelasData(kelasId);  
               const todayDate = new Date().toLocaleDateString('en-CA'); 
               await fetchAbsensiData(kelasId, todayDate);
           } else {

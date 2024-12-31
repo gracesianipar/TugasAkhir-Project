@@ -4,7 +4,7 @@ const profileImage = document.getElementById('profile-image');
 const uploadForm = document.getElementById('upload-form');
 const fileUploadInput = document.getElementById('file-upload');
 
-// Fungsi untuk mengambil data sesi
+// fungsi untuk mengambil data sesi
 async function fetchSessionData() {
     try {
         const response = await fetch('/api/session-siswa');
@@ -17,25 +17,25 @@ async function fetchSessionData() {
         console.log('Nama pengguna:', user.name); 
 
         const nameHeader = document.getElementById('employee-name-header');
-        console.log(nameHeader);  // Debugging log
+        console.log(nameHeader);  
         if (nameHeader) {
             nameHeader.textContent = user.name || 'Tamu';
         }
 
         const nameMessage = document.getElementById('employee-name-message');
         if (nameMessage) {
-            nameMessage.textContent = user.name || 'Tamu'; // Menggunakan 'Tamu' jika user.name undefined
+            nameMessage.textContent = user.name || 'Tamu'; 
         } else {
             console.error("Elemen dengan ID 'employee-name-message' tidak ditemukan.");
         }
         const biodataName = document.getElementById('biodata-name');
-        console.log(biodataName);  // Debugging log
+        console.log(biodataName);  
         if (biodataName) {
             biodataName.textContent = user.name || 'Tidak tersedia';
         }
 
         const biodataTtl = document.getElementById('biodata-ttl');
-        console.log(biodataTtl);  // Debugging log
+        console.log(biodataTtl);  
         if (biodataTtl) {
             biodataTtl.textContent = `${user.tempat_lahir}, ${user.tanggal_lahir}` || 'Tidak tersedia';
         }
@@ -43,7 +43,7 @@ async function fetchSessionData() {
        
 
         const biodataNisn = document.getElementById('biodata-nisn');
-        console.log(biodataNisn);  // Debugging log
+        console.log(biodataNisn);  
         if (biodataNisn) {
             biodataNisn.textContent = user.nisn || 'Tidak tersedia';
         }
@@ -83,15 +83,15 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    hideAllSections(); // Menyembunyikan semua konten
-    const defaultLink = document.querySelector('[data-target="siswa-profil"]'); // Memastikan Profil adalah default
+    hideAllSections(); 
+    const defaultLink = document.querySelector('[data-target="siswa-profil"]'); 
     if (defaultLink) {
         defaultLink.classList.add('active');
-        document.getElementById('siswa-profile').classList.remove('hidden'); // Menampilkan Profil
+        document.getElementById('siswa-profile').classList.remove('hidden'); 
     }
 });
 
-// Fungsi untuk mengambil data sesi
+// fungsi untuk mengambil data sesi
 async function fetchSessionDataSiswa() {
   try {
       const response = await fetch('/api/session-siswa');
@@ -143,23 +143,23 @@ async function getUserNISN() {
   try {
     const response = await fetch('/api/session-siswa');
     const sessionData = await response.json();
-    console.log('NISN dari sesi:', sessionData.nisn); // Debugging log
+    console.log('NISN dari sesi:', sessionData.nisn);
     return sessionData.nisn;
   } catch (error) {
     console.error('Gagal mengambil NISN:', error);
-    return null; // Return null jika gagal
+    return null;
   }
 }
 
 function getSelectedDate() {
   const dateInput = document.getElementById('date-input');
   const selectedDate = dateInput ? dateInput.value : null;
-  console.log('Tanggal yang dipilih:', selectedDate); // Debugging log
+  console.log('Tanggal yang dipilih:', selectedDate); 
   return selectedDate;
 }
 
 
-// Fungsi untuk mengambil data siswa berdasarkan NISN
+// fungsi untuk mengambil data siswa berdasarkan nisn
 async function fetchSiswaData(nisn) {
   try {
       const response = await fetch(`/api/siswa/${nisn}`);
@@ -174,10 +174,33 @@ async function fetchSiswaData(nisn) {
   }
 }
 
+async function fetchAbsensiData() {
+  const nisn = await getUserNISN(); 
+  const today = getCurrentDate(); 
+
+  if (!nisn) {
+      alert('NISN tidak ditemukan. Harap periksa sesi pengguna.');
+      return;
+  }
+
+  try {
+      const response = await fetch(`/api/attendance-details-siswa?nisn=${nisn}&date=${today}`);
+      if (!response.ok) throw new Error('Gagal memuat data absensi.');
+
+      const data = await response.json();
+      console.log('Data absensi:', data);
+
+      displayAbsensi(data.attendanceDetails);  
+  } catch (error) {
+      console.error('Error saat memuat data absensi:', error);
+      alert(`Gagal memuat data absensi: ${error.message}`);
+  }
+}
+
 async function fetchAbsensiDataBySiswa() {
   const nisn = await getUserNISN();
-  const today = getCurrentDate(); // Tanggal hari ini
-  const yesterday = getPreviousDate(); // Tanggal kemarin
+  const today = getCurrentDate(); 
+  const yesterday = getPreviousDate(); 
 
   if (!nisn) {
     alert('NISN tidak ditemukan. Harap periksa sesi pengguna.');
@@ -185,7 +208,7 @@ async function fetchAbsensiDataBySiswa() {
   }
 
   try {
-    // Fetch data untuk hari ini dan kemarin
+    // fetch data untuk hari ini dan kemarin
     const todayResponse = await fetch(`/api/attendance-details-siswa?nisn=${nisn}&date=${today}`);
     const yesterdayResponse = await fetch(`/api/attendance-details-siswa?nisn=${nisn}&date=${yesterday}`);
 
@@ -197,36 +220,38 @@ async function fetchAbsensiDataBySiswa() {
     console.log('Data absensi hari ini:', todayData);
     console.log('Data absensi kemarin:', yesterdayData);
 
-    // Gabungkan data absensi
-    const allAttendance = [
+    let allAttendance = [
       ...yesterdayData.attendanceDetails.map((entry) => ({
         ...entry,
-        date: yesterday, // Pastikan tanggal kemarin disematkan
+        date: yesterday, 
       })),
-      ...todayData.attendanceDetails.map((entry) => ({
-        ...entry,
-        date: today, // Pastikan tanggal hari ini disematkan
-      })),
-    ];
+    ];    
 
-    if (allAttendance.length === 0) {
-      alert('Tidak ada data absensi ditemukan.');
-      return;
+    // memastikan hanya menampilkan data terbaru untuk hari ini
+    if (todayData.attendanceDetails.length > 0) {
+      const latestTodayAttendance = todayData.attendanceDetails[0]; 
+      allAttendance = allAttendance.filter((entry) => entry.date !== today); 
+      allAttendance.push({
+        ...latestTodayAttendance,
+        date: today,
+      });
     }
 
-    displayAbsensi(allAttendance); // Tampilkan semua data
+    // menampilkan data absensi yang sudah diproses
+    displayAbsensi(allAttendance); // menampilkan data absensi tanpa melakukan perubahan apapun
+
   } catch (error) {
     console.error('Error saat memuat data absensi:', error);
     alert(`Gagal memuat data absensi: ${error.message}`);
   }
 }
 
-// Fungsi untuk mendapatkan tanggal kemarin
+// fungsi untuk mendapatkan tanggal kemarin
 function getPreviousDate() {
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
   const year = yesterday.getFullYear();
-  const month = String(yesterday.getMonth() + 1).padStart(2, '0'); // Bulan dimulai dari 0
+  const month = String(yesterday.getMonth() + 1).padStart(2, '0'); 
   const day = String(yesterday.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 }
@@ -242,30 +267,29 @@ function displayError(message) {
 function getCurrentDate() {
   const today = new Date();
   const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, '0'); // Bulan dimulai dari 0
+  const month = String(today.getMonth() + 1).padStart(2, '0'); 
   const day = String(today.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 }
 
-
 function displayAbsensi(absensiData) {
   const tableBody = document.getElementById('absensi-table').getElementsByTagName('tbody')[0];
-  tableBody.innerHTML = ''; // Bersihkan semua baris sebelumnya
+  tableBody.innerHTML = ''; 
 
   absensiData.forEach((data) => {
-    const row = document.createElement('tr');
+    const row = document.createElement('tr'); 
 
-    const dateCell = document.createElement('td');
-    dateCell.textContent = data.date; // Tanggal dari data API
-    row.appendChild(dateCell);
+    const dateCell = document.createElement('td'); 
+    dateCell.textContent = data.date; 
+    row.appendChild(dateCell); 
 
-    const statusCell = document.createElement('td');
-    statusCell.textContent = data.status; // Status dari data API
-    row.appendChild(statusCell);
+    const statusCell = document.createElement('td'); 
+    statusCell.textContent = data.status;
+    row.appendChild(statusCell); 
 
-    tableBody.appendChild(row); // Tambahkan baris ke tabel
+    tableBody.appendChild(row); 
   });
 }
 
-// Mengambil data absensi ketika halaman selesai dimuat
+// mengambil data absensi ketika halaman selesai dimuat
 document.addEventListener('DOMContentLoaded', fetchAbsensiDataBySiswa);
