@@ -855,7 +855,7 @@ app.post('/api/tahun-ajaran', async (req, res) => {
     }
 });
 
-app.get('/api/tahun-ajaran/:id', async(req, res) => {
+app.get('/api/tahun-ajaran/:id', async (req, res) => {
     const { id } = req.params;
 
     try {
@@ -863,9 +863,13 @@ app.get('/api/tahun-ajaran/:id', async(req, res) => {
         const query = 'SELECT * FROM tahun_ajaran WHERE id = ?';
         const [result] = await db.execute(query, [id]);
 
-        // Jika data ditemukan, kirimkan sebagai response
+        // jika data ditemukan, kirimkan sebagai response
         if (result.length > 0) {
-            res.status(200).json(result[0]);
+            // memastikan data yang dikirimkan mengandung field tahun_ajaran
+            res.status(200).json({
+                id: result[0].id,
+                tahun_ajaran: result[0].nama_tahun_ajaran || 'Tidak Tersedia'
+            });
         } else {
             res.status(404).json({ message: 'Tahun Ajaran tidak ditemukan' });
         }

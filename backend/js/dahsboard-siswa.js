@@ -293,3 +293,68 @@ function displayAbsensi(absensiData) {
 
 // mengambil data absensi ketika halaman selesai dimuat
 document.addEventListener('DOMContentLoaded', fetchAbsensiDataBySiswa);
+
+async function fetchClassData(classId) {
+  try {
+      const response = await fetch(`/api/kelas/${classId}`);
+      if (!response.ok) {
+          throw new Error('Gagal mengambil data kelas.');
+      }
+
+      const classData = await response.json();
+      console.log('Data kelas:', classData);
+
+      const classNameElement = document.getElementById('class-name');
+      const classTeacherNameElement = document.getElementById('class-teacher-name');
+      const academicYearElement = document.getElementById('academic-year');
+
+      if (classNameElement && classTeacherNameElement && academicYearElement) {
+          classNameElement.textContent = `Nama Kelas: ${classData.nama_kelas || 'Tidak Tersedia'}`;
+          classTeacherNameElement.textContent = `Nama Wali Kelas: ${classData.nama_pegawai || 'Tidak Tersedia'}`;
+
+          // mengambil id tahun ajaran dari data kelas
+          const tahunAjaranId = classData.id_tahun_ajaran;
+
+          // mengecek apakah ID tahun ajaran ada
+          if (tahunAjaranId) {
+              console.log('Mencoba mengambil data tahun ajaran untuk ID:', tahunAjaranId);
+              const tahunAjaranResponse = await fetch(`/api/tahun-ajaran/${tahunAjaranId}`);
+              if (tahunAjaranResponse.ok) {
+                  const tahunAjaranData = await tahunAjaranResponse.json();
+                  console.log('Data Tahun Ajaran:', tahunAjaranData);  
+                  if (tahunAjaranData && tahunAjaranData.tahun_ajaran) {
+                      academicYearElement.textContent = `Tahun Ajaran: ${tahunAjaranData.tahun_ajaran}`;
+                  } else {
+                      academicYearElement.textContent = 'Tahun Ajaran Tidak Ditemukan';
+                  }
+              } else {
+                  academicYearElement.textContent = 'Tahun Ajaran Tidak Tersedia';
+              }
+          } else {
+              academicYearElement.textContent = 'Tahun Ajaran Tidak Tersedia';
+          }
+      }
+  } catch (error) {
+      console.error('Error:', error);
+      alert('Gagal memuat data kelas.');
+  }
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  const nisn = await getUserNISN();
+  if (nisn) {
+      const classId = await getClassIdByNisn(nisn);  
+      fetchClassData(classId);
+  }
+});
+
+async function getClassIdByNisn(nisn) {
+  try {
+      const response = await fetch(`/api/siswa/${nisn}`);
+      const studentData = await response.json();
+      return studentData.id_kelas; 
+  } catch (error) {
+      console.error('Error fetching class ID by NISN:', error);
+      return null;
+  }
+}
