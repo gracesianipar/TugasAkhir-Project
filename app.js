@@ -1287,28 +1287,50 @@ app.get('/api/attendance-details-siswa', async (req, res) => {
     try {
         const { nisn, date } = req.query;
 
-        if (!nisn || !date) {
-            return res.status(400).json({ message: 'NISN atau Tanggal tidak valid' });
+        if (!nisn) {
+            return res.status(400).json({ message: 'NISN tidak valid' });
         }
 
         console.log("Mengambil data absensi untuk:", { nisn, date });
 
-        const [results] = await db.query(
-            `
-            SELECT ad.id_attendance, ad.nisn, ad.status, s.nama_siswa
-FROM attendanceDetails AS ad
-INNER JOIN attendance AS a ON ad.id_attendance = a.id
-LEFT JOIN siswa AS s ON s.nisn = ad.nisn
-WHERE ad.nisn = ? AND a.date = ?
-ORDER BY a.date DESC, ad.id DESC
-LIMIT 1;
-            `,
-            [nisn, date]  
-        );
+        let query = `
+            SELECT ad.id_attendance, ad.nisn, ad.status, s.nama_siswa, a.date
+            FROM attendanceDetails AS ad
+            INNER JOIN attendance AS a ON ad.id_attendance = a.id
+            LEFT JOIN siswa AS s ON s.nisn = ad.nisn
+            WHERE ad.nisn = ?
+        `;
+
+        const params = [nisn];
+
+        // Tambahkan filter tanggal jika parameter `date` disediakan
+        if (date) {
+            query += ' AND a.date = ?';
+            params.push(date);
+        }
+
+        query += ' ORDER BY a.date DESC, ad.id DESC';
+
+        const [results] = await db.query(query, params);
 
         if (results.length > 0) {
-            console.log("Data absensi ditemukan:", results);
-            return res.json({ attendanceDetails: results });
+            // Format tanggal menjadi DD-MM-YYYY
+            const formattedResults = results.map(record => {
+                const rawDate = new Date(record.date);
+                const formattedDate = [
+                    String(rawDate.getDate()).padStart(2, '0'),
+                    String(rawDate.getMonth() + 1).padStart(2, '0'),
+                    rawDate.getFullYear()
+                ].join('-');
+
+                return {
+                    ...record,
+                    date: formattedDate,
+                };
+            });
+
+            console.log("Data absensi ditemukan:", formattedResults);
+            return res.json({ attendanceDetails: formattedResults });
         } else {
             console.log("Tidak ada data absensi ditemukan.");
             return res.json({ attendanceDetails: [] });

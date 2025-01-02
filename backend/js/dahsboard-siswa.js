@@ -199,8 +199,6 @@ async function fetchAbsensiData() {
 
 async function fetchAbsensiDataBySiswa() {
   const nisn = await getUserNISN();
-  const today = getCurrentDate(); 
-  const yesterday = getPreviousDate(); 
 
   if (!nisn) {
     alert('NISN tidak ditemukan. Harap periksa sesi pengguna.');
@@ -208,68 +206,33 @@ async function fetchAbsensiDataBySiswa() {
   }
 
   try {
-    // fetch data untuk hari ini dan kemarin
-    const todayResponse = await fetch(`/api/attendance-details-siswa?nisn=${nisn}&date=${today}`);
-    const yesterdayResponse = await fetch(`/api/attendance-details-siswa?nisn=${nisn}&date=${yesterday}`);
+    // mengambil semua data absensi siswa berdasarkan NISN
+    const response = await fetch(`/api/attendance-details-siswa?nisn=${nisn}`);
+    if (!response.ok) throw new Error('Gagal memuat data absensi.');
 
-    if (!todayResponse.ok || !yesterdayResponse.ok) throw new Error('Gagal memuat data absensi.');
+    const absensiData = await response.json();
+    console.log('Data absensi lengkap:', absensiData);
 
-    const todayData = await todayResponse.json();
-    const yesterdayData = await yesterdayResponse.json();
+    // memfilter duplikasi berdasarkan tanggal
+    const uniqueAbsensi = [];
+    const seenDates = new Set();
 
-    console.log('Data absensi hari ini:', todayData);
-    console.log('Data absensi kemarin:', yesterdayData);
+    absensiData.attendanceDetails.forEach(record => {
+      if (!seenDates.has(record.date)) {
+        uniqueAbsensi.push(record);
+        seenDates.add(record.date);
+      }
+    });
 
-    let allAttendance = [
-      ...yesterdayData.attendanceDetails.map((entry) => ({
-        ...entry,
-        date: yesterday, 
-      })),
-    ];    
+    console.log('Data absensi tanpa duplikasi:', uniqueAbsensi);
 
-    // memastikan hanya menampilkan data terbaru untuk hari ini
-    if (todayData.attendanceDetails.length > 0) {
-      const latestTodayAttendance = todayData.attendanceDetails[0]; 
-      allAttendance = allAttendance.filter((entry) => entry.date !== today); 
-      allAttendance.push({
-        ...latestTodayAttendance,
-        date: today,
-      });
-    }
-
-    // menampilkan data absensi yang sudah diproses
-    displayAbsensi(allAttendance); // menampilkan data absensi tanpa melakukan perubahan apapun
+    // menampilkan semua data absensi tanpa duplikasi
+    displayAbsensi(uniqueAbsensi);
 
   } catch (error) {
     console.error('Error saat memuat data absensi:', error);
     alert(`Gagal memuat data absensi: ${error.message}`);
   }
-}
-
-// fungsi untuk mendapatkan tanggal kemarin
-function getPreviousDate() {
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-  const year = yesterday.getFullYear();
-  const month = String(yesterday.getMonth() + 1).padStart(2, '0'); 
-  const day = String(yesterday.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
-
-function displayError(message) {
-  const errorContainer = document.getElementById('error-message');
-  if (errorContainer) {
-    errorContainer.textContent = message;
-    errorContainer.style.display = 'block';
-  }
-}
-
-function getCurrentDate() {
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, '0'); 
-  const day = String(today.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
 }
 
 function displayAbsensi(absensiData) {
