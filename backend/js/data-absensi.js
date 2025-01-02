@@ -416,4 +416,46 @@ async function loadKelasData() {
   }
 }
 
-document.addEventListener("DOMContentLoaded", loadKelasData);
+document.addEventListener('DOMContentLoaded', () => {
+  // memuat data saat halaman dimuat
+  loadKelasData();
+
+  // menggunakan add.EventListener untuk mencari siswa
+  document.getElementById('search-siswa').addEventListener('input', searchSiswa);
+});
+
+function searchSiswa() {
+  const searchTerm = document.getElementById('search-siswa').value.toLowerCase();
+  const rows = document.querySelectorAll('#siswa-tbody-absensi tr'); 
+  const targetElement = document.getElementById('siswa-container');
+  let hasMatch = false;
+
+  rows.forEach(row => {
+    const namaSiswa = row.cells[1].textContent.toLowerCase(); 
+    const nisn = row.cells[2].textContent.toLowerCase(); 
+
+    if (namaSiswa.includes(searchTerm) || nisn.includes(searchTerm)) {
+      row.style.display = ''; 
+      hasMatch = true;
+    } else {
+      row.style.display = 'none'; 
+    }
+  });
+
+  // menampilkan pesan/keterangan jika data tidak ditemukan
+  const notFoundMessage = document.getElementById('not-found-message');
+  if (!hasMatch) {
+    if (!notFoundMessage) {
+      const message = document.createElement('p');
+      message.id = 'not-found-message';
+      message.textContent = 'Siswa tidak terdaftar di dalam kelas ini.';
+      message.style.textAlign = 'center'; 
+      message.style.fontStyle = 'italic';
+      targetElement.appendChild(message);
+    }    
+  } else {
+    if (notFoundMessage) {
+      notFoundMessage.remove();
+    }
+  }
+}
