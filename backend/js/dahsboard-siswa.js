@@ -259,54 +259,64 @@ document.addEventListener('DOMContentLoaded', fetchAbsensiDataBySiswa);
 
 async function fetchClassData(classId) {
   try {
-      const response = await fetch(`/api/kelas/${classId}`);
-      if (!response.ok) {
-          throw new Error('Gagal mengambil data kelas.');
+    // Fetching class data
+    const response = await fetch(`/api/kelas/${classId}`);
+    if (!response.ok) {
+      throw new Error('Gagal mengambil data kelas.');
+    }
+
+    const classData = await response.json();
+    console.log('Data kelas:', classData);
+
+    const classNameElement = document.getElementById('class-name');
+    const classTeacherNameElement = document.getElementById('class-teacher-name');
+    const academicYearElement = document.getElementById('academic-year');
+    const semesterElement = document.getElementById('semester');
+    const studentNameElement = document.getElementById('student-name'); 
+
+    if (classNameElement && classTeacherNameElement && academicYearElement && semesterElement && studentNameElement) {
+      classNameElement.textContent = `Kelas: ${classData.nama_kelas || 'Tidak Tersedia'}`;
+      classTeacherNameElement.textContent = `Wali Kelas: ${classData.nama_pegawai || 'Tidak Tersedia'}`;
+
+      const sessionResponse = await fetch('/api/session-siswa');
+      if (sessionResponse.ok) {
+        const userData = await sessionResponse.json();
+        console.log('Data siswa dari sesi:', userData);
+        studentNameElement.textContent = `Nama Siswa: ${userData.name || 'Tidak Tersedia'}`;
+      } else {
+        studentNameElement.textContent = 'Nama Siswa Tidak Tersedia';
       }
 
-      const classData = await response.json();
-      console.log('Data kelas:', classData);
+      const tahunAjaranId = classData.id_tahun_ajaran;
 
-      const classNameElement = document.getElementById('class-name');
-      const classTeacherNameElement = document.getElementById('class-teacher-name');
-      const academicYearElement = document.getElementById('academic-year');
+      if (tahunAjaranId) {
+        console.log('Mencoba mengambil data tahun ajaran untuk ID:', tahunAjaranId);
+        const tahunAjaranResponse = await fetch(`/api/tahun-ajaran/${tahunAjaranId}`);
+        if (tahunAjaranResponse.ok) {
+          const tahunAjaranData = await tahunAjaranResponse.json();
+          console.log('Data Tahun Ajaran:', tahunAjaranData);
 
-      if (classNameElement && classTeacherNameElement && academicYearElement) {
-          classNameElement.textContent = `Nama Kelas: ${classData.nama_kelas || 'Tidak Tersedia'}`;
-          classTeacherNameElement.textContent = `Nama Wali Kelas: ${classData.nama_pegawai || 'Tidak Tersedia'}`;
-
-          // mengambil id tahun ajaran dari data kelas
-          const tahunAjaranId = classData.id_tahun_ajaran;
-
-          // mengecek apakah ID tahun ajaran ada
-          if (tahunAjaranId) {
-              console.log('Mencoba mengambil data tahun ajaran untuk ID:', tahunAjaranId);
-              const tahunAjaranResponse = await fetch(`/api/tahun-ajaran/${tahunAjaranId}`);
-              if (tahunAjaranResponse.ok) {
-                  const tahunAjaranData = await tahunAjaranResponse.json();
-                  console.log('Data Tahun Ajaran:', tahunAjaranData);  
-                  if (tahunAjaranData && tahunAjaranData.tahun_ajaran) {
-                      academicYearElement.textContent = `Tahun Ajaran: ${tahunAjaranData.tahun_ajaran}`;
-                  } else {
-                      academicYearElement.textContent = 'Tahun Ajaran Tidak Ditemukan';
-                  }
-              } else {
-                  academicYearElement.textContent = 'Tahun Ajaran Tidak Tersedia';
-              }
-          } else {
-              academicYearElement.textContent = 'Tahun Ajaran Tidak Tersedia';
-          }
+          academicYearElement.textContent = `Tahun Ajaran: ${tahunAjaranData.tahun_ajaran || 'Tidak Tersedia'}`;
+          semesterElement.textContent = `Semester: ${tahunAjaranData.semester || 'Tidak Tersedia'}`;
+        } else {
+          academicYearElement.textContent = 'Tahun Ajaran Tidak Ditemukan';
+          semesterElement.textContent = 'Semester Tidak Ditemukan';
+        }
+      } else {
+        academicYearElement.textContent = 'Tahun Ajaran Tidak Tersedia';
+        semesterElement.textContent = 'Semester Tidak Tersedia';
       }
+    }
   } catch (error) {
-      console.error('Error:', error);
-      alert('Gagal memuat data kelas.');
+    console.error('Error:', error);
+    alert('Gagal memuat data kelas.');
   }
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
   const nisn = await getUserNISN();
   if (nisn) {
-      const classId = await getClassIdByNisn(nisn);  
+      const classId = await getClassIdByNisn(nisn);
       fetchClassData(classId);
   }
 });

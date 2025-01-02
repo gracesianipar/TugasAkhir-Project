@@ -1,0 +1,90 @@
+#siswa-header {
+  display: grid;
+  grid-template-columns: 1fr 1fr; 
+  grid-template-rows: 1fr 1fr 1fr; 
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 20px;
+  font-family: 'Inter', sans-serif;
+  padding-top: 10px;
+}
+
+#siswa-header p {
+  font-size: 16px;
+}
+
+/* posisi kanan kiri */
+#student-name {
+  font-size: 20px;
+  grid-row: 1 / 2;
+  grid-column: 1 / 2;
+  font-weight: 500;
+}
+
+/* posisi kanan tengah */
+#class-name {
+  font-size: 16px;
+  grid-row: 2 / 3; 
+  grid-column: 1 / 2;
+  font-weight: 500;
+}
+
+/* posisi kanan bawah */
+#class-teacher-name {
+  font-size: 16px;
+  grid-row: 3 / 4; 
+  grid-column: 1 / 2;
+  font-weight: 500;
+}
+
+/* posisi kiri atas */
+#semester {
+  font-size: 16px;
+  grid-row: 1 / 2;  
+  grid-column: 2 / 3; 
+  text-align: right;
+  font-weight: 500;
+}
+
+/* posisi kiri bawah */
+#academic-year {
+  font-size: 16px;
+  grid-row: 2 / 3;  
+  grid-column: 2 / 3;  
+  text-align: right;
+  font-weight: 500;
+}
+
+#absensi-table {
+  table-layout: fixed; 
+  width: 100%;
+  border-collapse: collapse;
+}
+
+#absensi-table th, #absensi-table td {
+  padding: 12px;
+  text-align: center;
+  border: 1px solid #ddd;
+  font-size: 14px;
+  color: #444;
+}
+
+#absensi-table th {
+  background-color: #004D40;
+  color: white;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+#absensi-table tbody tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+#absensi-table td {
+  font-size: 15px;
+}
+
+#absensi-table td:first-child {
+  text-align: center;
+  padding-left: 16px;
+}

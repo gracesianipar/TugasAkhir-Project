@@ -868,7 +868,8 @@ app.get('/api/tahun-ajaran/:id', async (req, res) => {
             // memastikan data yang dikirimkan mengandung field tahun_ajaran
             res.status(200).json({
                 id: result[0].id,
-                tahun_ajaran: result[0].nama_tahun_ajaran || 'Tidak Tersedia'
+                tahun_ajaran: result[0].nama_tahun_ajaran || 'Tidak Tersedia',
+                semester:result[0].semester || 'Tidak Tersedia',
             });
         } else {
             res.status(404).json({ message: 'Tahun Ajaran tidak ditemukan' });
