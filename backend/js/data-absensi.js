@@ -74,6 +74,11 @@ function displayKelasHeader(kelasData) {
   dateInput.id = 'attendance-date';
   dateInput.name = 'attendance-date';
   dateInput.value = new Date().toISOString().split('T')[0]; 
+
+  dateInput.addEventListener('change', async () => {
+    const selectedDate = dateInput.value;
+    await fetchAbsensiData(kelasData.id, selectedDate);
+  });
   
   kelasHeader.innerHTML = ''; 
 
@@ -81,6 +86,43 @@ function displayKelasHeader(kelasData) {
   kelasHeader.appendChild(waliKelasInfo);
   kelasHeader.appendChild(dateLabel);
   kelasHeader.appendChild(dateInput);
+}
+
+// fungsi untuk memfilter sesuai tanggal yang dipilih di kalender
+function displayAbsensiData(absensiData) {
+  const absensiContainer = document.getElementById('absensi-container');
+  absensiContainer.innerHTML = ''; 
+
+  if (absensiData.length === 0) {
+    absensiContainer.textContent = 'Tidak ada data absensi untuk tanggal ini.';
+    return;
+  }
+
+  const table = document.createElement('table');
+  const headerRow = document.createElement('tr');
+  
+  const headers = ['Nama Siswa', 'Status Absensi'];
+  headers.forEach(headerText => {
+    const th = document.createElement('th');
+    th.textContent = headerText;
+    headerRow.appendChild(th);
+  });
+  table.appendChild(headerRow);
+
+  absensiData.forEach(absensi => {
+    const row = document.createElement('tr');
+    const nameCell = document.createElement('td');
+    nameCell.textContent = absensi.nama_siswa;
+
+    const statusCell = document.createElement('td');
+    statusCell.textContent = absensi.status;
+
+    row.appendChild(nameCell);
+    row.appendChild(statusCell);
+    table.appendChild(row);
+  });
+
+  absensiContainer.appendChild(table);
 }
 
 function displayAbsensi(siswaList) {
@@ -416,10 +458,9 @@ async function loadKelasData() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  // memuat data saat halaman dimuat
-  loadKelasData();
+document.addEventListener("DOMContentLoaded", loadKelasData);
 
+document.addEventListener('DOMContentLoaded', () => {
   // menggunakan add.EventListener untuk mencari siswa
   document.getElementById('search-siswa').addEventListener('input', searchSiswa);
 });
