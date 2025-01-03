@@ -4,9 +4,67 @@ body {
   line-height: 1.6;
 }
 
-.search-add-container {
+#kelas-header {
+  display: grid;
+  grid-template-areas:
+    "kelas semester"
+    "wali tahun"
+    "kalender tahun";
+  gap: 10px;
+}
+
+#kelas-header p {
+  margin: 0;
+}
+
+.kelas {
+  grid-area: kelas;
+  text-align: left;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.wali {
+  grid-area: wali;
+  text-align: left;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.semester {
+  grid-area: semester;
+  text-align: right;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.tahun {
+  grid-area: tahun;
+  text-align: right;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.kalender {
   display: flex;
   justify-content: flex-start; 
+  align-items: center; 
+  gap: 10px; 
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.kalenderBox {
+  height: 30px;
+  font-size: 14px;
+  width: 120px;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.search-add-container {
+  display: flex;
+  justify-content: flex-end; 
   align-items: center;
   margin-bottom: 20px; 
   margin-top: 10px;

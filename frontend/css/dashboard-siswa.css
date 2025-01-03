@@ -15,7 +15,7 @@
 
 /* posisi kanan kiri */
 #student-name {
-  font-size: 20px;
+  font-size: 16px;
   grid-row: 1 / 2;
   grid-column: 1 / 2;
   font-weight: 500;
