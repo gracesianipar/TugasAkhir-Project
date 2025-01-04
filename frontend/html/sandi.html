@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lupa Password</title>
+</head>
+<body>
+
+  <div class="reset-password-container">
+    <h2>Reset Password for <span id="role"><%= role %></span></h2>
+    <p>Name: <span id="name"><%= name %></span></p>
+    <p>Email: <span id="email"><%= email %></span></p>
+  
+    <form id="resetPasswordForm">
+      <label for="newPassword">Kata Sandi Baru</label>
+      <input type="password" id="newPassword" name="newPassword" required>
+  
+      <label for="confirmPassword">Konfirmasi Sandi Baru</label>
+      <input type="password" id="confirmPassword" name="confirmPassword" required>
+  
+      <button type="submit">Reset Password</button>
+    </form>
+  </div>  
+
+  <script src="/js/sandi.js"></script>
+
+</body>
+</html>

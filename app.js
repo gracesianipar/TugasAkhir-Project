@@ -7,6 +7,10 @@ const bodyParser = require('body-parser');
 const PORT = 3000;
 const multer = require('multer');
 const cors = require('cors');
+const fs = require('fs');
+const crypto = require('crypto');
+const nodemailer = require('nodemailer');
+require('dotenv').config();
 
 app.use(cors({ origin: '*' }));
 
@@ -30,6 +34,15 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({ storage: storage });
+
+// mengkonfigurasi transport untuk mengirim email
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS
+    },
+  });
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
@@ -78,6 +91,10 @@ app.get('/mading-detail', (req, res) => {
 
 app.get('/login', (req, res) => {
     res.sendFile(path.join(__dirname, 'frontend', 'html', 'login.html'));
+});
+
+app.get('/lupapassword', (req, res) => {
+    res.sendFile(path.join(__dirname, 'frontend', 'html', 'lupapassword.html'));
 });
 
 app.post('/api/login', async (req, res) => {
@@ -1341,6 +1358,147 @@ app.get('/api/attendance-details-siswa', async (req, res) => {
         return res.status(500).json({ message: 'Gagal memuat data absensi', error });
     }
 });
+
+// endpoint untuk lupa pasword yang membedakannya itu role (pegawai/siswa)
+//berada di file lupapassword.html
+app.post('/api/reset-password/:role', async (req, res) => {
+    const { role } = req.params;
+    const { email } = req.body;
+  
+    if (role !== 'pegawai' && role !== 'siswa') {
+      return res.status(400).json({ success: false, message: 'Role tidak valid' });
+    }
+
+    if (!email || !role) {
+    return res.status(400).json({ success: false, message: 'Email and Role are required' });
+  }
+  
+    const table = role === 'pegawai' ? 'pegawai' : 'siswa';
+    const nameColumn = role === 'pegawai' ? 'nama_pegawai' : 'nama_siswa';
+  
+    try {
+      const [results] = await db.execute(`SELECT ${nameColumn} AS name FROM ${table} WHERE email = ?`, [email]);
+  
+      if (results.length === 0) {
+        return res.status(400).json({ success: false, message: 'Email tidak ditemukan' });
+      }
+  
+      const user = results[0];
+  
+      const token = crypto.randomBytes(20).toString('hex');
+
+      const resetLink = `http://localhost:3000/reset-password/${role}?email=${email}&token=${token}`;
+  
+      const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS,
+        },
+      });
+  
+      const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: email,
+        subject: 'Reset Password',
+        text: `Halo ${user.name}, klik link berikut untuk mereset password Anda: ${resetLink}`,
+      };
+  
+      await transporter.sendMail(mailOptions);
+  
+      return res.json({
+        success: true,
+        message: `Link reset password telah dikirim ke email ${email} (${user.name})`,
+        name: user.name,
+        email: email,
+      });
+    } catch (err) {
+      console.error('Error:', err);
+      return res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
+    }
+  });
+
+  // endpoint untuk menampilkan buat kata sandi baru
+  // berada di di file sandi.html
+  app.get('/reset-password/:role', async (req, res) => {
+    const { role } = req.params;
+    const { email } = req.query;
+    console.log(`Role: ${role}, Email: ${email}`);
+  
+    if (!email) {
+      return res.status(400).send('Email is required');
+    }
+  
+    const table = role === 'pegawai' ? 'pegawai' : 'siswa';
+    const nameColumn = role === 'pegawai' ? 'nama_pegawai' : 'nama_siswa';
+  
+    try {
+      const [results] = await db.execute(`SELECT ${nameColumn} AS name FROM ${table} WHERE email = ?`, [email]);
+  
+      if (results.length === 0) {
+        return res.status(400).send('Email not found');
+      }
+  
+      const user = results[0];
+  
+      const filePath = path.join(__dirname, 'frontend', 'html', 'sandi.html');
+  
+      fs.readFile(filePath, 'utf8', (err, data) => {
+        if (err) {
+          return res.status(500).send('Error loading page');
+        }
+  
+        let htmlContent = data;
+        htmlContent = htmlContent
+          .replace('<%= role %>', role)
+          .replace('<%= email %>', email)
+          .replace('<%= name %>', user.name);
+  
+        res.send(htmlContent); 
+      });
+    } catch (err) {
+      console.error('Error:', err);
+      return res.status(500).send('Error occurred while processing the request');
+    }
+  });  
+
+  // endpoint untuk mengubah/update password setelah button reset password di klik
+  // berada di file sandi.html
+  app.put('/reset-password/:role', async (req, res) => {
+    const { role } = req.params;
+    const { email, newPassword, confirmPassword } = req.body;
+  
+    if (!email || !newPassword || !confirmPassword) {
+      return res.status(400).json({ success: false, message: 'Email, New Password, and Confirm Password are required' });
+    }
+  
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({ success: false, message: 'Password and confirm password must match' });
+    }
+  
+    try {
+      // tergantung dari role masing-masing yang membedakan itu yaitu email
+      const table = role === 'pegawai' ? 'pegawai' : 'siswa';
+  
+      // unutk mengupdate password yg membedakan itu email nya, makanya bisa di update
+      const updateResult = await db.execute(
+        `UPDATE ${table} SET password = ?, last_password_update = NOW() WHERE email = ?`,
+        [newPassword, email]
+      );
+  
+      console.log('updateResult:', updateResult);
+  
+      if (updateResult.changedRows > 0) {
+        return res.json({ success: true, message: 'Password berhasil diubah' });
+      } else {
+        return res.status(400).json({ success: false, message: 'Email tidak ditemukan' });
+      }
+      
+    } catch (error) {
+      console.error('Error during password update:', error);
+      return res.status(500).json({ success: false, message: 'An error occurred during the password update' });
+    }
+  });   
 
 app.listen(PORT, () => {
     console.log(`Server berjalan di http://localhost:${PORT}`);

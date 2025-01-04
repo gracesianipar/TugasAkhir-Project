@@ -5,6 +5,8 @@ const loginForm = document.getElementById("login-form");
 const buttonGroup = document.getElementById("button-group");
 const backButton = document.querySelector(".back-button");
 const roleText = document.getElementById("role-text"); // Elemen untuk menampilkan role (Siswa/Pegawai)
+const forgotPasswordLink = document.getElementById('forgot-password'); // mendapatkan elemen by id dari file login.html
+let selectedRole = ''; // untuk memilih role nya
 
 loginForm.addEventListener("submit", function(event) {
     event.preventDefault(); // Mencegah form dikirim secara default
@@ -68,21 +70,25 @@ loginForm.addEventListener("submit", function(event) {
         });
 });
 
-
 pegawaiBtn.addEventListener("click", function() {
+    selectedRole = 'pegawai';
     roleText.textContent = "Pegawai";
     document.getElementById('login_sebagai').value = 'Pegawai';
     loginForm.style.display = "block";
     buttonGroup.style.display = "none";
+    // link lupa password untuk pegawai setelah pilih button pegawai di halaman login
+    forgotPasswordLink.href = '/lupapassword?role=pegawai';
 });
 
 siswaBtn.addEventListener("click", function() {
+    selectedRole = 'siswa';
     roleText.textContent = "Siswa";
     document.getElementById('login_sebagai').value = 'Siswa';
     loginForm.style.display = "block";
     buttonGroup.style.display = "none";
+    // link lupa password untuk siswa setelah pilih button siswa di halaman login
+    forgotPasswordLink.href = '/lupapassword?role=siswa';
 });
-
 
 backButton.addEventListener("click", function() {
     loginForm.style.display = "none";
