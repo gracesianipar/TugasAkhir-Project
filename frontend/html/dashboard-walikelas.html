@@ -17,6 +17,7 @@
     <title>Guru Wali Kelas</title>
     <link rel="stylesheet" href="/css/dashboard-admin.css">
     <link rel="stylesheet" href="/css/data-absensi.css">
+    <link rel="stylesheet" href="/css/pop-up-menu.css">
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 
@@ -28,8 +29,15 @@
     <header>
         <h1>Guru Wali Kelas</h1>
         <div class="profile">
-            <i class="fas fa-user-circle" id="profile-icon"></i> 
+            <i class="fas fa-user-circle" id="profile-icon"></i>
             <span id="employee-name-header" class="employee-name">Tamu</span>
+        </div>
+        <!-- pop up menu untuk ubah password dan logout -->
+        <div id="profile-menu" class="profile-menu">
+            <ul>
+                <li><a href="/reset-password-after-login">Ubah Kata Sandi</a></li>
+                <li><a href="/login" id="logout-link">Keluar</a></li>
+            </ul>
         </div>
     </header>
     
@@ -188,6 +196,7 @@
     <script src="/js/dashboard-walikelas.js"></script>
     <script src="/js/persetujuanNilai.js"></script>
     <script src="/js/data-absensi.js"></script>
+    <script src="/js/pop-up-menu.js"></script>
 
 
 </body>

@@ -1480,7 +1480,7 @@ app.post('/api/reset-password/:role', async (req, res) => {
       // tergantung dari role masing-masing yang membedakan itu yaitu email
       const table = role === 'pegawai' ? 'pegawai' : 'siswa';
   
-      // unutk mengupdate password yg membedakan itu email nya, makanya bisa di update
+      // untuk mengupdate password yg membedakan itu email nya, makanya bisa di update
       const updateResult = await db.execute(
         `UPDATE ${table} SET password = ?, last_password_update = NOW() WHERE email = ?`,
         [newPassword, email]
@@ -1490,15 +1490,114 @@ app.post('/api/reset-password/:role', async (req, res) => {
   
       if (updateResult.changedRows > 0) {
         return res.json({ success: true, message: 'Password berhasil diubah' });
-      } else {
-        return res.status(400).json({ success: false, message: 'Email tidak ditemukan' });
-      }
+      } 
       
     } catch (error) {
       console.error('Error during password update:', error);
       return res.status(500).json({ success: false, message: 'An error occurred during the password update' });
     }
-  });   
+  });
+
+  // endpoint untuk reset password setelah login
+  app.get('/reset-password-after-login', async (req, res) => {
+    const loginSebagai = req.session.user ? req.session.user.login_sebagai : null;
+    const userId = req.session.user ? req.session.user.id : null;
+
+    console.log('Login Sebagai:', loginSebagai); 
+    console.log('User ID:', userId);
+
+    if (!loginSebagai || !userId) {
+        return res.status(400).send('Role and User ID are required');
+    }
+
+    try {
+        const table = loginSebagai === 'Pegawai' ? 'pegawai' : 'siswa';
+        const idColumn = loginSebagai === 'Pegawai' ? 'nip' : 'nisn';
+        const nameColumn = loginSebagai === 'Pegawai' ? 'nama_pegawai' : 'nama_siswa';
+
+        const [results] = await db.execute(`SELECT ${nameColumn} AS name FROM ${table} WHERE ${idColumn} = ?`, [userId]);
+
+        if (results.length === 0) {
+            return res.status(400).send('User not found');
+        }
+
+        const user = results[0];
+
+        const filePath = path.join(__dirname, 'frontend', 'html', 'sandi-stlh-login.html');
+        fs.readFile(filePath, 'utf8', (err, data) => {
+            if (err) {
+                console.error('Error reading HTML file:', err);
+                return res.status(500).send('Error loading page');
+            }
+
+            let htmlContent = data;
+            htmlContent = htmlContent
+                .replace('<%= role %>', loginSebagai)
+                .replace('<%= name %>', user.name);
+
+            res.send(htmlContent);
+        });
+    } catch (err) {
+        console.error('Error occurred while processing the request:', err);
+        return res.status(500).send('Error occurred while processing the request');
+    }
+});
+
+// endpoint untuk mengubah kata sandi setelah login
+app.put('/reset-password-after-login', async (req, res) => {
+    console.log('Request body:', req.body);
+    const loginSebagai = req.session.user ? req.session.user.login_sebagai : null;
+    const userId = req.session.user ? req.session.user.id : null;
+    const { newPassword, confirmPassword } = req.body;
+
+    if (!newPassword || !confirmPassword) {
+        return res.status(400).json({ success: false, message: 'New Password and Confirm Password are required' });
+    }
+
+    if (newPassword !== confirmPassword) {
+        return res.status(400).json({ success: false, message: 'Password and confirm password must match' });
+    }
+
+    if (!loginSebagai || !userId) {
+        return res.status(400).json({ success: false, message: 'Role and User ID are required' });
+    }
+
+    try {
+        const table = loginSebagai === 'Pegawai' ? 'pegawai' : 'siswa';
+        const idColumn = loginSebagai === 'Pegawai' ? 'nip' : 'nisn';
+
+        console.log('Checking user with ID:', userId);
+
+        const [user] = await db.execute(
+            `SELECT password FROM ${table} WHERE ${idColumn} = ?`,
+            [userId]
+        );
+
+        console.log('User fetched from database:', user);
+
+        if (!user || user.length === 0) {
+            return res.status(400).json({ success: false, message: 'Pengguna tidak ditemukan' });
+        }
+
+        if (user[0].password === newPassword) {
+            return res.status(400).json({ success: false, message: 'Password baru sama dengan yang lama' });
+        }
+
+        const updateResult = await db.execute(
+            `UPDATE ${table} SET password = ?, last_password_update = NOW() WHERE ${idColumn} = ?`,
+            [newPassword, userId]
+        );
+
+        console.log('Update Result:', updateResult);
+
+        if (updateResult.affectedRows > 0) {
+            return res.status(200).json({ success: true, message: 'Password berhasil diubah' });
+        } 
+
+    } catch (error) {
+        console.error('Error during password update:', error);
+    }
+});
 
 app.listen(PORT, () => {
     console.log(`Server berjalan di http://localhost:${PORT}`);

@@ -17,8 +17,7 @@
     <title>Siswa Dashboard</title>
     <link rel="stylesheet" href="/css/dashboard-admin.css">
     <link rel="stylesheet" href="/css/dashboard-siswa.css">
-
-
+    <link rel="stylesheet" href="/css/pop-up-menu.css">
 
     <!-- SweetAlert2 CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
@@ -33,6 +32,13 @@
         <div class="profile">
             <i class="fas fa-user-circle" id="profile-icon"></i>  <!-- ID untuk ikon -->
             <span id="employee-name-header" class="employee-name">Tamu</span>
+        </div>
+
+        <div id="profile-menu" class="profile-menu">
+            <ul>
+                <li><a href="/reset-password-after-login">Ubah Kata Sandi</a></li>
+                <li><a href="/login">Keluar</a></li>
+            </ul>
         </div>
     </header>
     
@@ -135,6 +141,7 @@
             </main>
     </div>
     <script src="/js/dahsboard-siswa.js"></script>
+    <script src="/js/pop-up-menu.js"></script>
 </body>
 
 </html>

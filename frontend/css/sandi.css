@@ -1,0 +1,84 @@
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: #f4f4f9;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.reset-password-container {
+  background-color: #ffffff;
+  padding: 30px 40px;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  width: 100%;
+  max-width: 400px;
+}
+
+.reset-password-container h2 {
+  color: #333333;
+  margin-bottom: 20px;
+  font-size: 24px;
+}
+
+.reset-password-container span {
+  color: #004D40;
+  font-weight: bold;
+}
+
+.reset-password-container label {
+  display: block;
+  margin: 10px 0 5px;
+  font-size: 14px;
+  text-align: left;
+  color: #333333;
+}
+
+.reset-password-container input[type="password"] {
+  width: calc(100% - 20px);
+  padding: 10px;
+  margin: 10px 0;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 16px;
+}
+
+.reset-password-container button {
+  background-color: #004D40;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 10px 15px;
+  font-size: 16px;
+  cursor: pointer;
+  width: 100%;
+  transition: background-color 0.3s ease;
+}
+
+.reset-password-container button:hover {
+  background-color: #00332c;
+}
+
+.reset-password-container p {
+  font-size: 14px;
+  margin-bottom: 15px;
+  color: #333333;
+}
+
+@media (max-width: 480px) {
+  .reset-password-container {
+    padding: 20px;
+  }
+
+  .reset-password-container h2 {
+    font-size: 20px;
+  }
+
+  .reset-password-container button {
+    font-size: 14px;
+  }
+}
