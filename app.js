@@ -1215,7 +1215,7 @@ app.post('/api/save-attendance', async (req, res) => {
     }
 });
 
-// Endpoint untuk menyimpan detail absensi (tabel attendanceDetails)
+// endpoint untuk menyimpan detail absensi (tabel attendanceDetails)
 app.post('/api/save-attendance-details', async (req, res) => {
     try {
         const { absensiId, absensiData } = req.body;
@@ -1250,12 +1250,11 @@ app.post('/api/save-attendance-details', async (req, res) => {
     }
 });
 
-// Endpoint untuk mengambil data absensi (tabel attendanceDetails) dari data-absensi
+// endpoint untuk mengambil data absensi (tabel attendanceDetails) dari data-absensi
 app.get('/api/attendance-details', async (req, res) => {
    try {
         const { kelasId, date } = req.query;
 
-        // Validasi input
         if (!kelasId || !date) {
             return res.status(400).json({ message: 'ID Kelas atau Tanggal tidak valid' });
         }
@@ -1290,7 +1289,7 @@ app.get('/api/attendance-details', async (req, res) => {
 app.put('/api/update-attendance-details', async (req, res) => {
     const { absensiId, absensiData } = req.body;
 
-    // Memanggil fungsi untuk memperbarui status absensi
+    // fungsi untuk memperbarui status absensi
     const result = await updateStatusAbsensi(absensiId, absensiData);
 
     if (result.success) {
@@ -1301,6 +1300,7 @@ app.put('/api/update-attendance-details', async (req, res) => {
 });
 
 //route untuk menampilkan absensi per siswa yg login yang sudah guru wali kelas simpan
+// berada di dashboard-siswa.html
 app.get('/api/attendance-details-siswa', async (req, res) => {
     try {
         const { nisn, date } = req.query;
@@ -1321,7 +1321,6 @@ app.get('/api/attendance-details-siswa', async (req, res) => {
 
         const params = [nisn];
 
-        // Tambahkan filter tanggal jika parameter `date` disediakan
         if (date) {
             query += ' AND a.date = ?';
             params.push(date);
@@ -1332,7 +1331,6 @@ app.get('/api/attendance-details-siswa', async (req, res) => {
         const [results] = await db.query(query, params);
 
         if (results.length > 0) {
-            // Format tanggal menjadi DD-MM-YYYY
             const formattedResults = results.map(record => {
                 const rawDate = new Date(record.date);
                 const formattedDate = [

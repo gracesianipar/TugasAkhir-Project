@@ -58,7 +58,7 @@ async function fetchKelasData(kelasId) {
 
 async function displayKelasHeader(kelasData) {
   const kelasHeader = document.getElementById('kelas-header');
-  kelasHeader.innerHTML = ''; // Hapus isi sebelumnya
+  kelasHeader.innerHTML = ''; 
 
   if (!kelasData) {
     console.error('Data kelas tidak tersedia.');
@@ -73,19 +73,18 @@ async function displayKelasHeader(kelasData) {
   waliKelasInfo.className = 'wali';
   waliKelasInfo.textContent = `Wali Kelas: ${kelasData.nama_pegawai || 'Tidak Tersedia'}`;
 
-  // Membuat label dan input dalam satu elemen
   const dateLabel = document.createElement('label');
   dateLabel.className = 'kalender';
   dateLabel.setAttribute('for', 'attendance-date');
   
   const labelText = document.createTextNode('Pilih Tanggal: ');
-  dateLabel.appendChild(labelText); // Menambahkan teks "Pilih Tanggal:"
+  dateLabel.appendChild(labelText); 
 
   const dateInput = document.createElement('input');
   dateInput.type = 'date';
   dateInput.id = 'attendance-date';
   dateInput.name = 'attendance-date';
-  dateInput.value = new Date().toISOString().split('T')[0]; // Menetapkan default value pada input
+  dateInput.value = new Date().toISOString().split('T')[0];
   dateInput.className = 'kalenderBox';
   
   // Menambahkan input ke dalam label
@@ -259,28 +258,59 @@ function displayAbsensi(siswaList) {
 }
 
 const saveAbsensi = async () => {
-  const id_kelas = await getIdKelas(); 
+  const saveButton = document.getElementById("save-absensi-button");
+  const mode = saveButton.getAttribute("data-mode");
+  const id_kelas = await getIdKelas();
+
   if (!id_kelas) {
     alert("ID Kelas tidak ditemukan!");
     return;
   }
 
-  const absensiData = []; 
-  const radios = document.querySelectorAll('input[type="radio"]:checked');
-  
-  radios.forEach(radio => {
-    if (radio.name && radio.name.includes('[') && radio.name.includes(']')) {
-      const nisn = radio.name.split('[')[1].split(']')[0]; 
-      const status = radio.value; 
-  
+  const selectedDate = document.getElementById("attendance-date").value;
+  const today = new Date();
+  const sevenDaysAgo = new Date(today);
+  sevenDaysAgo.setDate(today.getDate() - 7);
+
+  const selectedDateObj = new Date(selectedDate);
+
+  // Check if the selected date is in the valid range
+  if (selectedDateObj > today) {
+    alert("Anda tidak dapat memilih tanggal di masa depan untuk absensi.");
+    return;
+  }
+
+  if (selectedDateObj < sevenDaysAgo) {
+    alert("Anda hanya bisa mengedit absensi dalam rentang 7 hari terakhir.");
+    return;
+  }
+
+  const absensiData = [];
+  const checkboxes = document.querySelectorAll('input[type="checkbox"]:checked');
+  checkboxes.forEach(checkbox => {
+    if (checkbox.name && checkbox.name.includes('[') && checkbox.name.includes(']')) {
+      const nisn = checkbox.name.split('[')[1].split(']')[0];
+      const status = checkbox.value;
       absensiData.push({
         nisn: nisn,
         status: status,
         id_kelas: id_kelas,
-        date: new Date().toISOString().split('T')[0]
+        date: selectedDate
       });
-    } else {
-      console.warn(`Radio button tidak memiliki atribut name yang sesuai: ${radio.name}`);
+    }
+  });
+
+  const radios = document.querySelectorAll('input[type="radio"]:checked');
+  radios.forEach(radio => {
+    if (radio.name && radio.name.includes('[') && radio.name.includes(']')) {
+      const nisn = radio.name.split('[')[1].split(']')[0];
+      const status = radio.value;
+      absensiData.push({
+        nisn: nisn,
+        status: status,
+        id_kelas: id_kelas,
+        date: selectedDate || new Date().toISOString().split('T')[0]
+      });
     }
   });
 
@@ -289,36 +319,48 @@ const saveAbsensi = async () => {
     return;
   }
 
-  // menghapus duplikat data sebelum menyimpan
+  // Remove duplicate data before saving
   const uniqueAbsensiData = removeDuplicateAbsensi(absensiData);
 
   try {
-    const attendanceResponse = await fetch("http://localhost:3000/api/save-attendance", {
+    let attendanceResponse;
+    if (mode === 'edit') {
+      // Enable checkbox and radio buttons for editing
+      document.querySelectorAll('input[type="checkbox"], input[type="radio"]').forEach(input => {
+        input.disabled = false;
+      });
+      saveButton.textContent = "Simpan";
+      saveButton.setAttribute("data-mode", "save");
+      return; // Exit after switching to save mode
+    }
+    
+
+    // Save or update attendance
+    attendanceResponse = await fetch("http://localhost:3000/api/save-attendance", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
         id_kelas: id_kelas,
-        date: new Date().toISOString().split('T')[0]
+        date: selectedDate || new Date().toISOString().split('T')[0]
       }),
     });
 
     if (!attendanceResponse.ok) {
       const errorDetails = await attendanceResponse.json();
-      console.log("Error details from save-attendance API:", errorDetails);
+      console.error("Error from save-attendance API:", errorDetails);
       throw new Error(errorDetails.message || "Gagal menyimpan data absensi kelas");
     }
 
     const attendanceResult = await attendanceResponse.json();
-    console.log("Response dari API save-attendance:", attendanceResult);
+    const attendanceId = attendanceResult.id || attendanceResult.insertId;
 
-    if (!attendanceResult.insertId) {
+    if (!attendanceId) {
       throw new Error("ID Absensi tidak ditemukan dalam response.");
     }
 
-    const attendanceId = attendanceResult.insertId; 
-
+    // Save attendance details
     const detailsResponse = await fetch("http://localhost:3000/api/save-attendance-details", {
       method: "POST",
       headers: {
@@ -326,27 +368,49 @@ const saveAbsensi = async () => {
       },
       body: JSON.stringify({
         absensiId: attendanceId,
-        absensiData: uniqueAbsensiData, 
+        absensiData: uniqueAbsensiData,
       }),
     });
 
     if (!detailsResponse.ok) {
       const errorDetails = await detailsResponse.json();
-      console.log("Error details from save-attendance-details API:", errorDetails);
+      console.error("Error from save-attendance-details API:", errorDetails);
       throw new Error(errorDetails.message || "Gagal menyimpan data detail absensi");
     }
 
-    const detailsResult = await detailsResponse.json();
     alert("Data absensi berhasil disimpan!");
-    console.log(detailsResult); 
+    saveButton.textContent = "Edit";
+    saveButton.setAttribute("data-mode", "edit");
 
-    fetchAbsensiData(id_kelas, new Date().toISOString().split('T')[0]);
+    // Refresh attendance data
+    fetchAbsensiData(id_kelas, selectedDate || new Date().toISOString().split('T')[0]);
 
   } catch (error) {
     console.error("Error:", error);
     alert("Gagal menyimpan data absensi.");
   }
 };
+
+document.getElementById("save-absensi-button").addEventListener("click", function() {
+  const mode = this.getAttribute("data-mode");
+
+  if (mode === "save") {
+  } else if (mode === "edit") {
+    
+    document.getElementById("cancel-button").style.display = "inline-block";  
+    this.textContent = "Simpan Perubahan";
+    this.setAttribute("data-mode", "save");
+  }
+});
+
+document.getElementById("cancel-button").addEventListener("click", function() {
+  const saveAbsensi = document.getElementById("save-absensi-button");
+  saveAbsensi.textContent = "Edit";
+  saveAbsensi.setAttribute("data-mode", "edit");
+  
+  this.style.display = "none";  
+
+});
 
 async function updateStatusAbsensi(absensiId, absensiData) {
   try {
@@ -439,16 +503,16 @@ async function fetchAbsensiData(kelasId, date) {
         <td>${item.nama_siswa}</td>
         <td>${item.nisn}</td>
         <td>
-            <input type="radio" name="absensi[${item.nisn}]" data-nisn="${item.nisn}" data-status="Hadir" value="Hadir" ${item.status === 'Hadir' ? 'checked' : ''}>
+            <input type="radio" name="absensi[${item.nisn}]" data-nisn="${item.nisn}" data-status="Hadir" value="Hadir" ${item.status === 'Hadir' ? 'checked' : ''} ${item.status ? 'disabled' : ''}>
         </td>
         <td>
-            <input type="radio" name="absensi[${item.nisn}]" data-nisn="${item.nisn}" data-status="Izin" value="Izin" ${item.status === 'Izin' ? 'checked' : ''}>
+            <input type="radio" name="absensi[${item.nisn}]" data-nisn="${item.nisn}" data-status="Izin" value="Izin" ${item.status === 'Izin' ? 'checked' : ''} ${item.status ? 'disabled' : ''}>
         </td>
         <td>
-            <input type="radio" name="absensi[${item.nisn}]" data-nisn="${item.nisn}" data-status="Sakit" value="Sakit" ${item.status === 'Sakit' ? 'checked' : ''}>
+            <input type="radio" name="absensi[${item.nisn}]" data-nisn="${item.nisn}" data-status="Sakit" value="Sakit" ${item.status === 'Sakit' ? 'checked' : ''} ${item.status ? 'disabled' : ''}>
         </td>
         <td>
-            <input type="radio" name="absensi[${item.nisn}]" data-nisn="${item.nisn}" data-status="Alpa" value="Alpa" ${item.status === 'Alpa' ? 'checked' : ''}>
+            <input type="radio" name="absensi[${item.nisn}]" data-nisn="${item.nisn}" data-status="Alpa" value="Alpa" ${item.status === 'Alpa' ? 'checked' : ''} ${item.status ? 'disabled' : ''}>
         </td>
       `;
       tbody.appendChild(tr);

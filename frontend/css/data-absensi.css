@@ -130,6 +130,10 @@ td input[type="radio"] {
   margin-right: 10px;
 }
 
+input[type="radio"]:disabled {
+  pointer-events: none;
+}
+
 .select-all-container {
   display: flex;
   justify-content: space-between;
