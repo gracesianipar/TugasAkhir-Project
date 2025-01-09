@@ -261,6 +261,7 @@ const saveAbsensi = async () => {
   const saveButton = document.getElementById("save-absensi-button");
   const mode = saveButton.getAttribute("data-mode");
   const id_kelas = await getIdKelas();
+  const cancelButton = document.getElementById("cancel-button");
 
   if (!id_kelas) {
     alert("ID Kelas tidak ditemukan!");
@@ -274,16 +275,28 @@ const saveAbsensi = async () => {
 
   const selectedDateObj = new Date(selectedDate);
 
-  // Check if the selected date is in the valid range
+  // memeriksa apakah tanggal yang dipilih berada dalam rentang yang valid
   if (selectedDateObj > today) {
-    alert("Anda tidak dapat memilih tanggal di masa depan untuk absensi.");
+    Swal.fire({
+      icon: 'error',
+      title: 'Tanggal di Masa Depan!',
+      text: 'Anda tidak dapat memilih tanggal di masa depan untuk absensi.',
+      confirmButtonText: 'OK',
+      confirmButtonColor: '#004D40'
+    });
     return;
-  }
+  }  
 
   if (selectedDateObj < sevenDaysAgo) {
-    alert("Anda hanya bisa mengedit absensi dalam rentang 7 hari terakhir.");
+    Swal.fire({
+      icon: 'error',
+      title: 'Rentang Tanggal Tidak Valid!',
+      text: 'Anda hanya bisa mengedit absensi dalam rentang 7 hari terakhir.',
+      confirmButtonText: 'OK',
+      confirmButtonColor: '#004D40'
+    });
     return;
-  }
+  }  
 
   const absensiData = [];
   const checkboxes = document.querySelectorAll('input[type="checkbox"]:checked');
@@ -315,27 +328,35 @@ const saveAbsensi = async () => {
   });
 
   if (absensiData.length === 0) {
-    alert("Tidak ada data absensi yang dipilih!");
+    Swal.fire({
+      icon: 'warning',
+      title: 'Data Absensi Kosong!',
+      text: 'Tidak ada data absensi yang dipilih.',
+      confirmButtonText: 'OK',
+      confirmButtonColor: '#004D40'
+    });
     return;
-  }
+  }  
 
-  // Remove duplicate data before saving
+  // menghapus duplikat data sebelum disimpan
   const uniqueAbsensiData = removeDuplicateAbsensi(absensiData);
 
   try {
     let attendanceResponse;
     if (mode === 'edit') {
-      // Enable checkbox and radio buttons for editing
+      // mengaktifkan checkbox dan radio button untuk mengedit
       document.querySelectorAll('input[type="checkbox"], input[type="radio"]').forEach(input => {
         input.disabled = false;
       });
-      saveButton.textContent = "Simpan";
+      saveButton.textContent = "Simpan Perubahan";
       saveButton.setAttribute("data-mode", "save");
-      return; // Exit after switching to save mode
+
+      // menyembunyikan tombol Batal setelah memilih Simpan Perubahan
+      cancelButton.style.display = "inline-block";
+      return; 
     }
     
-
-    // Save or update attendance
+    // simpan or update attendance
     attendanceResponse = await fetch("http://localhost:3000/api/save-attendance", {
       method: "POST",
       headers: {
@@ -360,7 +381,7 @@ const saveAbsensi = async () => {
       throw new Error("ID Absensi tidak ditemukan dalam response.");
     }
 
-    // Save attendance details
+    // menyimpan attendance details
     const detailsResponse = await fetch("http://localhost:3000/api/save-attendance-details", {
       method: "POST",
       headers: {
@@ -378,16 +399,32 @@ const saveAbsensi = async () => {
       throw new Error(errorDetails.message || "Gagal menyimpan data detail absensi");
     }
 
-    alert("Data absensi berhasil disimpan!");
+    Swal.fire({
+      icon: 'success',
+      title: 'Sukses!',
+      text: 'Data absensi berhasil disimpan!',
+      confirmButtonText: 'OK',
+      confirmButtonColor: '#004D40'
+    });
+
     saveButton.textContent = "Edit";
     saveButton.setAttribute("data-mode", "edit");
 
-    // Refresh attendance data
+    // menyembunyikan tombol Batal setelah sukses simpan
+    cancelButton.style.display = "none";
+
+    // refresh attendance data
     fetchAbsensiData(id_kelas, selectedDate || new Date().toISOString().split('T')[0]);
 
   } catch (error) {
     console.error("Error:", error);
-    alert("Gagal menyimpan data absensi.");
+    Swal.fire({
+      icon: 'error',
+      title: 'Gagal!',
+      text: 'Gagal menyimpan data absensi.',
+      confirmButtonText: 'OK',
+      confirmButtonColor: '#004D40'
+    });
   }
 };
 
@@ -526,6 +563,13 @@ async function fetchAbsensiData(kelasId, date) {
     if (selectAllHadirCheckbox) {
       selectAllHadirCheckbox.checked = semuaHadir;
     }
+
+    // mengatur button simpan kembali ke mode edit setelah simpan absensi
+    const saveButton = document.getElementById("save-absensi-button");
+    const cancelButton = document.getElementById("cancel-button");
+    saveButton.textContent = "Edit";
+    saveButton.setAttribute("data-mode", "edit");
+    cancelButton.style.display = "none";
 
   } catch (error) {
     console.error("Error saat memuat data absensi:", error);

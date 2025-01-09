@@ -150,6 +150,40 @@
                 </table>
             </section>
 
+            <section id="persetujuan-nilai" class="content-section hidden">
+                <h2>Persetujuan Nilai Siswa</h2>
+
+                <!-- Menampilkan Info Kelas -->
+                <div id="info-kelas">
+                    <!-- Data kelas akan ditampilkan di sini -->
+                </div>
+                <div class="filter-wrapper">
+                    <select id="mapel-filter">
+                        <option value="">Pilih Mata Pelajaran</option>
+                    </select>
+                </div>
+                <table id="nilaiTable">
+                    <thead>
+                        <tr>
+                            <th>NISN</th>
+                            <th>Nama Siswa</th>
+                            <th>UTS</th>
+                            <th>UAS</th>
+                            <th>Tugas</th>
+                            <th>Nilai Akhir</th>
+                            <th>Status</th>
+                            <th>Catatan</th>
+                        </tr>
+                    </thead>
+                    <tbody id="nilai-tbody">
+                        <!-- Data akan ditambahkan di sini -->
+                    </tbody>
+                </table>
+                <div id="button-container" style="text-align: right; margin-top: 10px;">
+                    <button id="setujui-semua" style="display: none;">Setujui Semua</button>
+                </div>
+            </section>
+
             <section id="absensi-siswa" class="content-section hidden">
               <h2>Data Absensi Siswa</h2>
             
@@ -190,12 +224,12 @@
                 </tbody>
               </table>
               <button id="save-absensi-button" onclick="saveAbsensi()">Simpan Absensi</button>
-              <button id="cancel-button" class="btn-cancel">Batal</button>
+              <button id="cancel-button" style="display: none;"onclick="cancelEdit()" > Batal</button>
             </section>            
         </main>
     </div>
     <script src="/js/dashboard-walikelas.js"></script>
-    <script src="/js/persetujuanNilai.js"></script>
+    <script src="/js/persetujuanNilaiSiswa.js"></script>
     <script src="/js/data-absensi.js"></script>
     <script src="/js/pop-up-menu.js"></script>
 
