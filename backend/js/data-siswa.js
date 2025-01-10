@@ -281,6 +281,9 @@ siswaTbody.addEventListener('click', async (event) => {
             showCancelButton: true,
             confirmButtonText: 'Simpan',
             cancelButtonText: 'Batal',
+            confirmButtonColor: '#004D40',
+            cancelButtonColor: '#d33',
+    
             preConfirm: () => {
                 const nisn = document.getElementById('nisn');
                 const namaSiswa = document.getElementById('nama_siswa');
@@ -298,12 +301,14 @@ siswaTbody.addEventListener('click', async (event) => {
                 const anakKe = document.getElementById('anak_ke');
                 const status = document.getElementById('status');
                 const idKelas = document.getElementById('id_kelas');
+                
 
                 if (!nisn || !namaSiswa || !alamat || !tempatLahir || !tanggalLahir || !jenisKelamin || !agama ||
                     !tanggalMasuk || !namaAyah || !namaIbu || !noHpOrtu || !email || !nik || !anakKe || !status) {
                     Swal.showValidationMessage('Semua field harus diisi!');
                     return false;
                 }
+               
 
                 return {
                     id: siswaId, // ID siswa untuk update
@@ -322,7 +327,8 @@ siswaTbody.addEventListener('click', async (event) => {
                     nik: nik.value,
                     anak_ke: anakKe.value,
                     status: status.value,
-                    id_kelas: idKelas.value || null,  // Mengambil kelas yang dipilih
+                    id_kelas: idKelas.value || null,
+                     // Mengambil kelas yang dipilih
                 };
             },
         });
@@ -465,7 +471,9 @@ document.getElementById('add-student-btn').addEventListener('click', async () =>
         `,
         showCancelButton: true,
         confirmButtonText: 'Tambah',
-        cancelButtonText: 'Batal',
+        confirmButtonColor: '#004D40',
+        cancelButtonColor: '#d33',
+
         preConfirm: () => {
             const nisn = document.getElementById('nisn');
             const namaSiswa = document.getElementById('nama_siswa');
@@ -508,12 +516,14 @@ document.getElementById('add-student-btn').addEventListener('click', async () =>
                 nik: nik.value,
                 anak_ke: anakKe.value,
                 status: status.value,
-                id_kelas: idKelasValue,  // Menambahkan id_kelas
+                id_kelas: idKelasValue, 
+                password: nisn.value, // Menambahkan id_kelas
             };
         },
     });
 
     if (formValues) {
+        formValues.password = formValues.nisn;
         try {
             const response = await fetch('/api/siswa', {
                 method: 'POST',
@@ -523,7 +533,14 @@ document.getElementById('add-student-btn').addEventListener('click', async () =>
                 body: JSON.stringify(formValues),
             });
 
-            if (response.ok) {
+            if (response.status === 400) {
+                const data = await response.json();
+                Swal.fire({
+                    title: 'Gagal!',
+                    text: data.message || 'Terjadi kesalahan pada data yang dimasukkan.',
+                    icon: 'error',
+                });
+            } else if (response.ok) {
                 Swal.fire({
                     title: 'Berhasil!',
                     text: 'Data siswa berhasil ditambahkan.',
@@ -538,6 +555,8 @@ document.getElementById('add-student-btn').addEventListener('click', async () =>
                     icon: 'error',
                 });
             }
+            
+            
         } catch (error) {
             console.error("Error adding siswa:", error);
             Swal.fire({

@@ -87,10 +87,8 @@ async function displayKelasHeader(kelasData) {
   dateInput.value = new Date().toISOString().split('T')[0];
   dateInput.className = 'kalenderBox';
   
-  // Menambahkan input ke dalam label
   dateLabel.appendChild(dateInput);
 
-  // Menambahkan event listener untuk perubahan tanggal
   dateInput.addEventListener('change', async () => {
     const selectedDate = dateInput.value;
     await fetchAbsensiData(kelasData.id, selectedDate);
@@ -126,7 +124,6 @@ async function displayKelasHeader(kelasData) {
     }
   }
 
-  // Tambahkan elemen ke dalam header
   kelasHeader.appendChild(kelasInfo);
   kelasHeader.appendChild(waliKelasInfo);
   kelasHeader.appendChild(semesterInfo);
@@ -285,7 +282,7 @@ const saveAbsensi = async () => {
       confirmButtonColor: '#004D40'
     });
     return;
-  }  
+  }
 
   if (selectedDateObj < sevenDaysAgo) {
     Swal.fire({
@@ -296,7 +293,16 @@ const saveAbsensi = async () => {
       confirmButtonColor: '#004D40'
     });
     return;
-  }  
+  }
+
+  // mengaktifkan checkbox dan radio button jika tanggal valid
+  document.querySelectorAll('input[type="checkbox"], input[type="radio"]').forEach(input => {
+    input.disabled = false; // pastikan input tidak disabled
+  });
+
+  // mengubah tombol simpan menjadi "Simpan Absensi" dengan data-mode = "save"
+  saveButton.textContent = "Simpan Absensi";
+  saveButton.setAttribute("data-mode", "save");
 
   const absensiData = [];
   const checkboxes = document.querySelectorAll('input[type="checkbox"]:checked');
@@ -334,9 +340,20 @@ const saveAbsensi = async () => {
       text: 'Tidak ada data absensi yang dipilih.',
       confirmButtonText: 'OK',
       confirmButtonColor: '#004D40'
+    }).then(() => {
+      // reset form ke kondisi awal dan aktifkan kembali checkbox dan radio button
+      document.querySelectorAll('input[type="checkbox"], input[type="radio"]').forEach(input => {
+        input.checked = false;
+        input.disabled = false; // Pastikan checkbox dan radio button di-enable sebelum simpan
+      });
+
+      saveButton.textContent = "Simpan Absensi";
+      saveButton.setAttribute("data-mode", "save");
+
+      cancelButton.style.display = "none";
     });
     return;
-  }  
+  }
 
   // menghapus duplikat data sebelum disimpan
   const uniqueAbsensiData = removeDuplicateAbsensi(absensiData);
@@ -346,17 +363,22 @@ const saveAbsensi = async () => {
     if (mode === 'edit') {
       // mengaktifkan checkbox dan radio button untuk mengedit
       document.querySelectorAll('input[type="checkbox"], input[type="radio"]').forEach(input => {
-        input.disabled = false;
+        input.disabled = false; 
       });
       saveButton.textContent = "Simpan Perubahan";
       saveButton.setAttribute("data-mode", "save");
 
       // menyembunyikan tombol Batal setelah memilih Simpan Perubahan
       cancelButton.style.display = "inline-block";
-      return; 
+      return;
     }
-    
-    // simpan or update attendance
+
+    // menonaktifkan checkbox dan radio button setelah save
+    document.querySelectorAll('input[type="checkbox"], input[type="radio"]').forEach(input => {
+      input.disabled = true; 
+    });
+
+    // simpan atau update attendance
     attendanceResponse = await fetch("http://localhost:3000/api/save-attendance", {
       method: "POST",
       headers: {
@@ -409,8 +431,6 @@ const saveAbsensi = async () => {
 
     saveButton.textContent = "Edit";
     saveButton.setAttribute("data-mode", "edit");
-
-    // menyembunyikan tombol Batal setelah sukses simpan
     cancelButton.style.display = "none";
 
     // refresh attendance data
@@ -446,6 +466,11 @@ document.getElementById("cancel-button").addEventListener("click", function() {
   saveAbsensi.setAttribute("data-mode", "edit");
   
   this.style.display = "none";  
+
+  // menonaktifkan checkbox dan radio button
+  document.querySelectorAll('input[type="checkbox"], input[type="radio"]').forEach(input => {
+    input.disabled = true;
+  });
 
 });
 
@@ -570,6 +595,10 @@ async function fetchAbsensiData(kelasId, date) {
     saveButton.textContent = "Edit";
     saveButton.setAttribute("data-mode", "edit");
     cancelButton.style.display = "none";
+
+    document.querySelectorAll('input[type="checkbox"], input[type="radio"]').forEach(input => {
+      input.disabled = true;
+    });
 
   } catch (error) {
     console.error("Error saat memuat data absensi:", error);

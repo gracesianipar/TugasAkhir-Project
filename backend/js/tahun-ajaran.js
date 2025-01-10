@@ -16,6 +16,8 @@ function renderTahunAjaran(data) {
     data.forEach(item => {
         const tr = document.createElement("tr");
         tr.innerHTML = `
+                    <td>${item.id}</td>
+
             <td>${item.nama_tahun_ajaran}</td>
             <td>${formatDate(item.tanggal_mulai)}</td>
             <td>${formatDate(item.tanggal_selesai)}</td>

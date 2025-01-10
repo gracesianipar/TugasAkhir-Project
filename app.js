@@ -1068,15 +1068,42 @@ app.get('/api/mading-home', async (req, res) => {
 });
 
 app.post('/api/mata-pelajaran', async (req, res) => {
-    const { id, nama_pelajaran, nip, id_tahun_ajaran } = req.body;
+    const { id, nama_pelajaran, nip, id_tahun_ajaran, id_kelas } = req.body;
 
     console.log('Received data:', req.body);
-    const query = 'INSERT INTO mata_pelajaran (id, nama_mata_pelajaran, nip, id_tahun_ajaran) VALUES (?, ?, ?, ?)';
+
+    // Cek apakah sudah ada mata pelajaran dengan nama_pelajaran di kelas yang sama dan tahun ajaran yang sama
+    const checkQuery = `
+        SELECT mp.*, p.nama_pegawai FROM mata_pelajaran mp
+        JOIN pegawai p ON mp.nip = p.nip
+        WHERE mp.nama_mata_pelajaran = ? 
+        AND mp.id_kelas = ? 
+        AND mp.id_tahun_ajaran = ? 
+        AND mp.nip != ? 
+    `;
 
     try {
-        await db.query(query, [id, nama_pelajaran, nip, id_tahun_ajaran]);
+        // Cek apakah mata pelajaran sudah ada di kelas dan tahun ajaran yang sama
+        const [existingMatpel] = await db.query(checkQuery, [nama_pelajaran, id_kelas, id_tahun_ajaran, nip]);
+
+        if (existingMatpel.length > 0) {
+            const existingTeacherName = existingMatpel[0].nama_pegawai;  // Nama guru yang sudah ada
+            return res.status(400).json({
+                success: false,
+                message: `Mata pelajaran ini sudah diajarkan oleh guru ${existingTeacherName} di kelas ini.`
+            });
+        }
+
+        // Jika tidak ada duplikasi, lanjutkan untuk memasukkan data
+        const query = `
+            INSERT INTO mata_pelajaran (id, nama_mata_pelajaran, nip, id_tahun_ajaran, id_kelas) 
+            VALUES (?, ?, ?, ?, ?)
+        `;
+
+        await db.query(query, [id, nama_pelajaran, nip, id_tahun_ajaran, id_kelas]);
         console.log('Data successfully inserted');
         return res.status(201).json({ success: true, message: 'Mata Pelajaran berhasil ditambahkan' });
+
     } catch (err) {
         console.error('Error inserting data:', err);
         return res.status(500).json({ success: false, message: 'Error inserting data', error: err.message });
@@ -1106,10 +1133,14 @@ app.get('/api/mata-pelajaran', async (req, res) => {
         const search = req.query.search ? `%${req.query.search.toLowerCase()}%` : null;
 
         let query = `
-            SELECT mp.id, mp.nama_mata_pelajaran, mp.nip, 
-                   IFNULL(p.nama_pegawai, 'Nama Pegawai Tidak Ada') AS nama_pegawai
-            FROM mata_pelajaran mp
-            LEFT JOIN pegawai p ON mp.nip = p.nip
+        SELECT mp.id, mp.nama_mata_pelajaran, mp.nip, mp.id_kelas, 
+            IFNULL(p.nama_pegawai, 'Nama Pegawai Tidak Ada') AS nama_pegawai,
+            IFNULL(k.nama_kelas, 'Nama Kelas Tidak Ada') AS nama_kelas
+        FROM mata_pelajaran mp
+        LEFT JOIN pegawai p ON mp.nip = p.nip
+        LEFT JOIN kelas k ON mp.id_kelas = k.id  -- Misalnya id_kelas menghubungkan dengan id di tabel kelas
+
+
         `;
 
         const params = [];
@@ -1184,481 +1215,6 @@ app.delete('/api/mata-pelajaran/:id', async (req, res) => {
     } catch (error) {
         console.error("Error deleting Mata Pelajaran:", error);
         res.status(500).json({ message: 'Terjadi kesalahan pada server.' });
-    }
-});
-
-app.get('/api/mapel', async (req, res) => {
-    try {
-        const filterTahunAjaran = req.query.tahun_ajaran || null;
-        const kelasId = req.query.kelas_id || null;
-
-        const nipGuru = req.session.user?.id; // Ambil NIP dari session pengguna
-
-        if (!nipGuru) {
-            return res.status(400).json({ error: 'NIP pengguna tidak ditemukan dalam session' });
-        }
-
-        // Menyusun query
-        let query = `
-            SELECT mp.id, mp.nama_mata_pelajaran, mp.nip, 
-                   IFNULL(p.nama_pegawai, 'Nama Pegawai Tidak Ada') AS nama_pegawai
-            FROM mata_pelajaran mp
-            LEFT JOIN pegawai p ON mp.nip = p.nip
-            WHERE mp.nip = ?
-        `;
-
-        const params = [nipGuru];
-
-        if (filterTahunAjaran) {
-            query += ' AND mp.id_tahun_ajaran = ?';
-            params.push(filterTahunAjaran);
-        }
-
-        if (kelasId) {
-            query += ' AND mp.id_kelas = ?';
-            params.push(kelasId);
-        }
-
-        const [rows] = await db.execute(query, params);
-        res.json(rows); // Kirim data mata pelajaran yang sudah difilter
-    } catch (error) {
-        console.error('Error:', error);
-        res.status(500).json({ error: 'Terjadi kesalahan saat memproses data.' });
-    }
-});
-
-app.get('/api/mapel/:idKelas', async (req, res) => {
-    const { idKelas } = req.params;
-
-    // Query SQL untuk mengambil mata pelajaran berdasarkan id_kelas
-    const query = 'SELECT nama_mata_pelajaran, id FROM mata_pelajaran WHERE id_kelas = ?';
-
-    try {
-        // Menjalankan query dan menunggu hasilnya
-        const [results, fields] = await db.execute(query, [idKelas]);
-
-        // Jika data tidak ditemukan
-        if (results.length === 0) {
-            return res.status(404).json({ message: 'Mata pelajaran tidak ditemukan untuk kelas ini' });
-        }
-
-        // Mengirimkan data mata pelajaran
-        res.json(results);
-
-    } catch (err) {
-        console.error('Error executing query:', err);
-        // Menangani kesalahan server
-        res.status(500).json({ message: 'Terjadi kesalahan server' });
-    }
-});
-
-// Endpoint untuk menyimpan data absensi (tabel attendance)
-app.post('/api/save-attendance', async (req, res) => {
-    try {
-        const { id_kelas, date } = req.body;
-
-        console.log("Data yang diterima:", { id_kelas, date });
-
-        if (!id_kelas || !date) {
-            return res.status(400).json({ message: 'Missing required fields: id_kelas or date' });
-        }
-
-        await db.query('INSERT INTO attendance (id_kelas, date) VALUES (?, ?)', [id_kelas, date]);
-
-        const [rows] = await db.query('SELECT id FROM attendance WHERE id_kelas = ? AND date = ?', [id_kelas, date]);
-
-        if (rows.length > 0) {
-            const newId = rows[0].id;
-            console.log("ID baru:", newId);
-            return res.json({ insertId: newId });
-        } else {
-            return res.status(400).json({ message: 'Failed to retrieve new attendance ID' });
-        }
-    } catch (error) {
-        console.error("Error in save-attendance:", error);
-        return res.status(500).json({ message: 'Internal Server Error' });
-    }
-});
-
-// endpoint untuk menyimpan detail absensi (tabel attendanceDetails)
-app.post('/api/save-attendance-details', async (req, res) => {
-    try {
-        const { absensiId, absensiData } = req.body;
-
-        if (!absensiId || !Array.isArray(absensiData)) {
-            return res.status(400).json({ message: 'Missing or invalid data' });
-        }
-
-        console.log("Absensi ID:", absensiId);
-        console.log("Data Absensi:", absensiData);
-
-        const values = absensiData.map(item => [absensiId, item.nisn, item.status]);
-
-        const [result] = await db.query(
-            `
-            INSERT INTO attendanceDetails (id_attendance, nisn, status)
-            VALUES ?
-            ON DUPLICATE KEY UPDATE
-                status = VALUES(status)
-            `,
-            [values]
-        );
-
-        if (result.affectedRows === 0) {
-            throw new Error("Failed to insert or update attendance details");
-        }
-
-        res.json({ message: 'Attendance details saved successfully', result });
-    } catch (error) {
-        console.error("Error saving attendance details:", error);
-        res.status(500).json({ message: 'Internal Server Error', error });
-    }
-});
-
-// endpoint untuk mengambil data absensi (tabel attendanceDetails) dari data-absensi
-app.get('/api/attendance-details', async (req, res) => {
-   try {
-        const { kelasId, date } = req.query;
-
-        if (!kelasId || !date) {
-            return res.status(400).json({ message: 'ID Kelas atau Tanggal tidak valid' });
-        }
-
-        console.log("Mengambil data absensi untuk:", { kelasId, date });
-
-        const [results] = await db.query(
-            `
-            SELECT ad.id_attendance, ad.nisn, ad.status, s.nama_siswa
-            FROM attendanceDetails AS ad
-            INNER JOIN attendance AS a ON ad.id_attendance = a.id
-            LEFT JOIN siswa AS s ON s.nisn = ad.nisn  -- Menggunakan LEFT JOIN
-            WHERE a.id_kelas = ? AND a.date = ?;
-
-            `,
-            [kelasId, date]
-        );
-
-        if (results.length > 0) {
-            console.log("Data absensi ditemukan:", results);
-            return res.json({ attendanceDetails: results }); 
-        } else {
-            console.log("Tidak ada data absensi ditemukan.");
-            return res.json({ attendanceDetails: [] }); 
-        }
-    } catch (error) {
-        console.error("Error fetching attendance details:", error);
-        return res.status(500).json({ message: 'Gagal memuat data absensi', error });
-    }
-});
-
-app.put('/api/update-attendance-details', async (req, res) => {
-    const { absensiId, absensiData } = req.body;
-
-    // fungsi untuk memperbarui status absensi
-    const result = await updateStatusAbsensi(absensiId, absensiData);
-
-    if (result.success) {
-        return res.json(result);
-    } else {
-        return res.status(500).json({ message: result.message, error: result.error });
-    }
-});
-
-//route untuk menampilkan absensi per siswa yg login yang sudah guru wali kelas simpan
-// berada di dashboard-siswa.html
-app.get('/api/attendance-details-siswa', async (req, res) => {
-    try {
-        const { nisn, date } = req.query;
-
-        if (!nisn) {
-            return res.status(400).json({ message: 'NISN tidak valid' });
-        }
-
-        console.log("Mengambil data absensi untuk:", { nisn, date });
-
-        let query = `
-            SELECT ad.id_attendance, ad.nisn, ad.status, s.nama_siswa, a.date
-            FROM attendanceDetails AS ad
-            INNER JOIN attendance AS a ON ad.id_attendance = a.id
-            LEFT JOIN siswa AS s ON s.nisn = ad.nisn
-            WHERE ad.nisn = ?
-        `;
-
-        const params = [nisn];
-
-        if (date) {
-            query += ' AND a.date = ?';
-            params.push(date);
-        }
-
-        query += ' ORDER BY a.date DESC, ad.id DESC';
-
-        const [results] = await db.query(query, params);
-
-        if (results.length > 0) {
-            const formattedResults = results.map(record => {
-                const rawDate = new Date(record.date);
-                const formattedDate = [
-                    String(rawDate.getDate()).padStart(2, '0'),
-                    String(rawDate.getMonth() + 1).padStart(2, '0'),
-                    rawDate.getFullYear()
-                ].join('-');
-
-                return {
-                    ...record,
-                    date: formattedDate,
-                };
-            });
-
-            console.log("Data absensi ditemukan:", formattedResults);
-            return res.json({ attendanceDetails: formattedResults });
-        } else {
-            console.log("Tidak ada data absensi ditemukan.");
-            return res.json({ attendanceDetails: [] });
-        }
-    } catch (error) {
-        console.error("Error fetching attendance details:", error);
-        return res.status(500).json({ message: 'Gagal memuat data absensi', error });
-    }
-});
-
-// endpoint untuk lupa pasword yang membedakannya itu role (pegawai/siswa)
-//berada di file lupapassword.html
-app.post('/api/reset-password/:role', async (req, res) => {
-    const { role } = req.params;
-    const { email } = req.body;
-  
-    if (role !== 'pegawai' && role !== 'siswa') {
-      return res.status(400).json({ success: false, message: 'Role tidak valid' });
-    }
-
-    if (!email || !role) {
-    return res.status(400).json({ success: false, message: 'Email and Role are required' });
-  }
-  
-    const table = role === 'pegawai' ? 'pegawai' : 'siswa';
-    const nameColumn = role === 'pegawai' ? 'nama_pegawai' : 'nama_siswa';
-  
-    try {
-      const [results] = await db.execute(`SELECT ${nameColumn} AS name FROM ${table} WHERE email = ?`, [email]);
-  
-      if (results.length === 0) {
-        return res.status(400).json({ success: false, message: 'Email tidak ditemukan' });
-      }
-  
-      const user = results[0];
-  
-      const token = crypto.randomBytes(20).toString('hex');
-
-      const resetLink = `http://localhost:3000/reset-password/${role}?email=${email}&token=${token}`;
-  
-      const transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-          user: process.env.EMAIL_USER,
-          pass: process.env.EMAIL_PASS,
-        },
-      });
-  
-      const mailOptions = {
-        from: process.env.EMAIL_USER,
-        to: email,
-        subject: 'Reset Password',
-        text: `Halo ${user.name}, klik link berikut untuk mereset password Anda: ${resetLink}`,
-      };
-  
-      await transporter.sendMail(mailOptions);
-  
-      return res.json({
-        success: true,
-        message: `Link reset password telah dikirim ke email ${email} (${user.name})`,
-        name: user.name,
-        email: email,
-      });
-    } catch (err) {
-      console.error('Error:', err);
-      return res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
-    }
-  });
-
-  // endpoint untuk menampilkan buat kata sandi baru
-  // berada di di file sandi.html
-  app.get('/reset-password/:role', async (req, res) => {
-    const { role } = req.params;
-    const { email } = req.query;
-    console.log(`Role: ${role}, Email: ${email}`);
-  
-    if (!email) {
-      return res.status(400).send('Email is required');
-    }
-  
-    const table = role === 'pegawai' ? 'pegawai' : 'siswa';
-    const nameColumn = role === 'pegawai' ? 'nama_pegawai' : 'nama_siswa';
-  
-    try {
-      const [results] = await db.execute(`SELECT ${nameColumn} AS name FROM ${table} WHERE email = ?`, [email]);
-  
-      if (results.length === 0) {
-        return res.status(400).send('Email not found');
-      }
-  
-      const user = results[0];
-  
-      const filePath = path.join(__dirname, 'frontend', 'html', 'sandi.html');
-  
-      fs.readFile(filePath, 'utf8', (err, data) => {
-        if (err) {
-          return res.status(500).send('Error loading page');
-        }
-  
-        let htmlContent = data;
-        htmlContent = htmlContent
-          .replace('<%= role %>', role)
-          .replace('<%= email %>', email)
-          .replace('<%= name %>', user.name);
-  
-        res.send(htmlContent); 
-      });
-    } catch (err) {
-      console.error('Error:', err);
-      return res.status(500).send('Error occurred while processing the request');
-    }
-  });  
-
-  // endpoint untuk mengubah/update password setelah button reset password di klik
-  // berada di file sandi.html
-  app.put('/reset-password/:role', async (req, res) => {
-    const { role } = req.params;
-    const { email, newPassword, confirmPassword } = req.body;
-  
-    if (!email || !newPassword || !confirmPassword) {
-      return res.status(400).json({ success: false, message: 'Email, New Password, and Confirm Password are required' });
-    }
-  
-    if (newPassword !== confirmPassword) {
-      return res.status(400).json({ success: false, message: 'Password and confirm password must match' });
-    }
-  
-    try {
-      // tergantung dari role masing-masing yang membedakan itu yaitu email
-      const table = role === 'pegawai' ? 'pegawai' : 'siswa';
-  
-      // untuk mengupdate password yg membedakan itu email nya, makanya bisa di update
-      const updateResult = await db.execute(
-        `UPDATE ${table} SET password = ?, last_password_update = NOW() WHERE email = ?`,
-        [newPassword, email]
-      );
-  
-      console.log('updateResult:', updateResult);
-  
-      if (updateResult.changedRows > 0) {
-        return res.json({ success: true, message: 'Password berhasil diubah' });
-      } 
-      
-    } catch (error) {
-      console.error('Error during password update:', error);
-      return res.status(500).json({ success: false, message: 'An error occurred during the password update' });
-    }
-  });
-
-  // endpoint untuk reset password setelah login
-  app.get('/reset-password-after-login', async (req, res) => {
-    const loginSebagai = req.session.user ? req.session.user.login_sebagai : null;
-    const userId = req.session.user ? req.session.user.id : null;
-
-    console.log('Login Sebagai:', loginSebagai); 
-    console.log('User ID:', userId);
-
-    if (!loginSebagai || !userId) {
-        return res.status(400).send('Role and User ID are required');
-    }
-
-    try {
-        const table = loginSebagai === 'Pegawai' ? 'pegawai' : 'siswa';
-        const idColumn = loginSebagai === 'Pegawai' ? 'nip' : 'nisn';
-        const nameColumn = loginSebagai === 'Pegawai' ? 'nama_pegawai' : 'nama_siswa';
-
-        const [results] = await db.execute(`SELECT ${nameColumn} AS name FROM ${table} WHERE ${idColumn} = ?`, [userId]);
-
-        if (results.length === 0) {
-            return res.status(400).send('User not found');
-        }
-
-        const user = results[0];
-
-        const filePath = path.join(__dirname, 'frontend', 'html', 'sandi-stlh-login.html');
-        fs.readFile(filePath, 'utf8', (err, data) => {
-            if (err) {
-                console.error('Error reading HTML file:', err);
-                return res.status(500).send('Error loading page');
-            }
-
-            let htmlContent = data;
-            htmlContent = htmlContent
-                .replace('<%= role %>', loginSebagai)
-                .replace('<%= name %>', user.name);
-
-            res.send(htmlContent);
-        });
-    } catch (err) {
-        console.error('Error occurred while processing the request:', err);
-        return res.status(500).send('Error occurred while processing the request');
-    }
-});
-
-// endpoint untuk mengubah kata sandi setelah login
-app.put('/reset-password-after-login', async (req, res) => {
-    console.log('Request body:', req.body);
-    const loginSebagai = req.session.user ? req.session.user.login_sebagai : null;
-    const userId = req.session.user ? req.session.user.id : null;
-    const { newPassword, confirmPassword } = req.body;
-
-    if (!newPassword || !confirmPassword) {
-        return res.status(400).json({ success: false, message: 'New Password and Confirm Password are required' });
-    }
-
-    if (newPassword !== confirmPassword) {
-        return res.status(400).json({ success: false, message: 'Password and confirm password must match' });
-    }
-
-    if (!loginSebagai || !userId) {
-        return res.status(400).json({ success: false, message: 'Role and User ID are required' });
-    }
-
-    try {
-        const table = loginSebagai === 'Pegawai' ? 'pegawai' : 'siswa';
-        const idColumn = loginSebagai === 'Pegawai' ? 'nip' : 'nisn';
-
-        console.log('Checking user with ID:', userId);
-
-        const [user] = await db.execute(
-            `SELECT password FROM ${table} WHERE ${idColumn} = ?`,
-            [userId]
-        );
-
-        console.log('User fetched from database:', user);
-
-        if (!user || user.length === 0) {
-            return res.status(400).json({ success: false, message: 'Pengguna tidak ditemukan' });
-        }
-
-        if (user[0].password === newPassword) {
-            return res.status(400).json({ success: false, message: 'Password baru sama dengan yang lama' });
-        }
-
-        const updateResult = await db.execute(
-            `UPDATE ${table} SET password = ?, last_password_update = NOW() WHERE ${idColumn} = ?`,
-            [newPassword, userId]
-        );
-
-        console.log('Update Result:', updateResult);
-
-        if (updateResult.affectedRows > 0) {
-            return res.status(200).json({ success: true, message: 'Password berhasil diubah' });
-        } 
-
-    } catch (error) {
-        console.error('Error during password update:', error);
     }
 });
 
@@ -2261,48 +1817,416 @@ app.post('/api/simpan-nilai', async (req, res) => {
         res.status(500).json({ message: 'Terjadi kesalahan saat menyimpan nilai.' });
     }
 });
-app.post('/forgot-password', async (req, res) => {
-    const { email, nik } = req.body;
-    if (!email || !nik) {
-        return res.status(400).json({ error: 'Email dan NIK harus diisi.' });
-    }
-    
+
+// Endpoint untuk menyimpan data absensi (tabel attendance)
+app.post('/api/save-attendance', async (req, res) => {
     try {
-        // Query untuk mencocokkan email dan NIK
-        const [rows] = await db.query('SELECT * FROM pegawai WHERE email = ? AND nik = ?', [email, nik]);
+        const { id_kelas, date } = req.body;
+
+        console.log("Data yang diterima:", { id_kelas, date });
+
+        if (!id_kelas || !date) {
+            return res.status(400).json({ message: 'Missing required fields: id_kelas or date' });
+        }
+
+        await db.query('INSERT INTO attendance (id_kelas, date) VALUES (?, ?)', [id_kelas, date]);
+
+        const [rows] = await db.query('SELECT id FROM attendance WHERE id_kelas = ? AND date = ?', [id_kelas, date]);
 
         if (rows.length > 0) {
-            res.status(200).json({ message: 'Data valid. Silakan reset password.' });
+            const newId = rows[0].id;
+            console.log("ID baru:", newId);
+            return res.json({ insertId: newId });
         } else {
-            res.status(404).json({ error: 'Email dan NIK tidak sesuai.' });
+            return res.status(400).json({ message: 'Failed to retrieve new attendance ID' });
         }
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Terjadi kesalahan pada server.' });
+        console.error("Error in save-attendance:", error);
+        return res.status(500).json({ message: 'Internal Server Error' });
     }
 });
-// Endpoint untuk mendapatkan data absensi berdasarkan kelas dan tanggal
-app.get('/api/absensi/:kelasId/:tanggal', async (req, res) => {
-    const { kelasId, tanggal } = req.params;
+
+// endpoint untuk menyimpan detail absensi (tabel attendanceDetails)
+app.post('/api/save-attendance-details', async (req, res) => {
+    try {
+        const { absensiId, absensiData } = req.body;
+
+        if (!absensiId || !Array.isArray(absensiData)) {
+            return res.status(400).json({ message: 'Missing or invalid data' });
+        }
+
+        console.log("Absensi ID:", absensiId);
+        console.log("Data Absensi:", absensiData);
+
+        const values = absensiData.map(item => [absensiId, item.nisn, item.status]);
+
+        const [result] = await db.query(
+            `
+            INSERT INTO attendanceDetails (id_attendance, nisn, status)
+            VALUES ?
+            ON DUPLICATE KEY UPDATE
+                status = VALUES(status)
+            `,
+            [values]
+        );
+
+        if (result.affectedRows === 0) {
+            throw new Error("Failed to insert or update attendance details");
+        }
+
+        res.json({ message: 'Attendance details saved successfully', result });
+    } catch (error) {
+        console.error("Error saving attendance details:", error);
+        res.status(500).json({ message: 'Internal Server Error', error });
+    }
+});
+
+// endpoint untuk mengambil data absensi (tabel attendanceDetails) dari data-absensi
+app.get('/api/attendance-details', async (req, res) => {
+   try {
+        const { kelasId, date } = req.query;
+
+        if (!kelasId || !date) {
+            return res.status(400).json({ message: 'ID Kelas atau Tanggal tidak valid' });
+        }
+
+        console.log("Mengambil data absensi untuk:", { kelasId, date });
+
+        const [results] = await db.query(
+            `
+            SELECT ad.id_attendance, ad.nisn, ad.status, s.nama_siswa
+            FROM attendanceDetails AS ad
+            INNER JOIN attendance AS a ON ad.id_attendance = a.id
+            LEFT JOIN siswa AS s ON s.nisn = ad.nisn  -- Menggunakan LEFT JOIN
+            WHERE a.id_kelas = ? AND a.date = ?;
+
+            `,
+            [kelasId, date]
+        );
+
+        if (results.length > 0) {
+            console.log("Data absensi ditemukan:", results);
+            return res.json({ attendanceDetails: results }); 
+        } else {
+            console.log("Tidak ada data absensi ditemukan.");
+            return res.json({ attendanceDetails: [] }); 
+        }
+    } catch (error) {
+        console.error("Error fetching attendance details:", error);
+        return res.status(500).json({ message: 'Gagal memuat data absensi', error });
+    }
+});
+
+app.put('/api/update-attendance-details', async (req, res) => {
+    const { absensiId, absensiData } = req.body;
+
+    // fungsi untuk memperbarui status absensi
+    const result = await updateStatusAbsensi(absensiId, absensiData);
+
+    if (result.success) {
+        return res.json(result);
+    } else {
+        return res.status(500).json({ message: result.message, error: result.error });
+    }
+});
+
+//route untuk menampilkan absensi per siswa yg login yang sudah guru wali kelas simpan
+// berada di dashboard-siswa.html
+app.get('/api/attendance-details-siswa', async (req, res) => {
+    try {
+        const { nisn, date } = req.query;
+
+        if (!nisn) {
+            return res.status(400).json({ message: 'NISN tidak valid' });
+        }
+
+        console.log("Mengambil data absensi untuk:", { nisn, date });
+
+        let query = `
+            SELECT ad.id_attendance, ad.nisn, ad.status, s.nama_siswa, a.date
+            FROM attendanceDetails AS ad
+            INNER JOIN attendance AS a ON ad.id_attendance = a.id
+            LEFT JOIN siswa AS s ON s.nisn = ad.nisn
+            WHERE ad.nisn = ?
+        `;
+
+        const params = [nisn];
+
+        if (date) {
+            query += ' AND a.date = ?';
+            params.push(date);
+        }
+
+        query += ' ORDER BY a.date DESC, ad.id DESC';
+
+        const [results] = await db.query(query, params);
+
+        if (results.length > 0) {
+            const formattedResults = results.map(record => {
+                const rawDate = new Date(record.date);
+                const formattedDate = [
+                    String(rawDate.getDate()).padStart(2, '0'),
+                    String(rawDate.getMonth() + 1).padStart(2, '0'),
+                    rawDate.getFullYear()
+                ].join('-');
+
+                return {
+                    ...record,
+                    date: formattedDate,
+                };
+            });
+
+            console.log("Data absensi ditemukan:", formattedResults);
+            return res.json({ attendanceDetails: formattedResults });
+        } else {
+            console.log("Tidak ada data absensi ditemukan.");
+            return res.json({ attendanceDetails: [] });
+        }
+    } catch (error) {
+        console.error("Error fetching attendance details:", error);
+        return res.status(500).json({ message: 'Gagal memuat data absensi', error });
+    }
+});
+
+// endpoint untuk lupa pasword yang membedakannya itu role (pegawai/siswa)
+//berada di file lupapassword.html
+app.post('/api/reset-password/:role', async (req, res) => {
+    const { role } = req.params;
+    const { email } = req.body;
   
-    if (!kelasId || !tanggal) {
-      return res.status(400).json({ message: 'Parameter kelasId dan tanggal wajib diisi.' });
+    if (role !== 'pegawai' && role !== 'siswa') {
+      return res.status(400).json({ success: false, message: 'Role tidak valid' });
+    }
+
+    if (!email || !role) {
+    return res.status(400).json({ success: false, message: 'Email and Role are required' });
+  }
+  
+    const table = role === 'pegawai' ? 'pegawai' : 'siswa';
+    const nameColumn = role === 'pegawai' ? 'nama_pegawai' : 'nama_siswa';
+  
+    try {
+      const [results] = await db.execute(`SELECT ${nameColumn} AS name FROM ${table} WHERE email = ?`, [email]);
+  
+      if (results.length === 0) {
+        return res.status(400).json({ success: false, message: 'Email tidak ditemukan' });
+      }
+  
+      const user = results[0];
+  
+      const token = crypto.randomBytes(20).toString('hex');
+
+      const resetLink = `http://localhost:3000/reset-password/${role}?email=${email}&token=${token}`;
+  
+      const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS,
+        },
+      });
+  
+      const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: email,
+        subject: 'Reset Password',
+        text: `Halo ${user.name}, klik link berikut untuk mereset password Anda: ${resetLink}`,
+      };
+  
+      await transporter.sendMail(mailOptions);
+  
+      return res.json({
+        success: true,
+        message: `Link reset password telah dikirim ke email ${email} (${user.name})`,
+        name: user.name,
+        email: email,
+      });
+    } catch (err) {
+      console.error('Error:', err);
+      return res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
+    }
+  });
+
+  // endpoint untuk menampilkan buat kata sandi baru
+  // berada di di file sandi.html
+  app.get('/reset-password/:role', async (req, res) => {
+    const { role } = req.params;
+    const { email } = req.query;
+    console.log(`Role: ${role}, Email: ${email}`);
+  
+    if (!email) {
+      return res.status(400).send('Email is required');
+    }
+  
+    const table = role === 'pegawai' ? 'pegawai' : 'siswa';
+    const nameColumn = role === 'pegawai' ? 'nama_pegawai' : 'nama_siswa';
+  
+    try {
+      const [results] = await db.execute(`SELECT ${nameColumn} AS name FROM ${table} WHERE email = ?`, [email]);
+  
+      if (results.length === 0) {
+        return res.status(400).send('Email not found');
+      }
+  
+      const user = results[0];
+  
+      const filePath = path.join(__dirname, 'frontend', 'html', 'sandi.html');
+  
+      fs.readFile(filePath, 'utf8', (err, data) => {
+        if (err) {
+          return res.status(500).send('Error loading page');
+        }
+  
+        let htmlContent = data;
+        htmlContent = htmlContent
+          .replace('<%= role %>', role)
+          .replace('<%= email %>', email)
+          .replace('<%= name %>', user.name);
+  
+        res.send(htmlContent); 
+      });
+    } catch (err) {
+      console.error('Error:', err);
+      return res.status(500).send('Error occurred while processing the request');
+    }
+  });  
+
+  // endpoint untuk mengubah/update password setelah button reset password di klik
+  // berada di file sandi.html
+  app.put('/reset-password/:role', async (req, res) => {
+    const { role } = req.params;
+    const { email, newPassword, confirmPassword } = req.body;
+  
+    if (!email || !newPassword || !confirmPassword) {
+      return res.status(400).json({ success: false, message: 'Email, New Password, and Confirm Password are required' });
+    }
+  
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({ success: false, message: 'Password and confirm password must match' });
     }
   
     try {
-      const query = 'SELECT * FROM attendance WHERE id_kelas = ? AND date = ?';
-      const [rows] = await db.execute(query, [kelasId, tanggal]);
+      // tergantung dari role masing-masing yang membedakan itu yaitu email
+      const table = role === 'pegawai' ? 'pegawai' : 'siswa';
   
-      if (rows.length > 0) {
-        return res.status(200).json(rows); 
-      } else {
-        return res.status(204).json({ message: "Tidak ada data absensi untuk tanggal ini" });  
-      }
+      // untuk mengupdate password yg membedakan itu email nya, makanya bisa di update
+      const updateResult = await db.execute(
+        `UPDATE ${table} SET password = ?, last_password_update = NOW() WHERE email = ?`,
+        [newPassword, email]
+      );
+  
+      console.log('updateResult:', updateResult);
+  
+      if (updateResult.changedRows > 0) {
+        return res.json({ success: true, message: 'Password berhasil diubah' });
+      } 
+      
     } catch (error) {
-      console.error('Error fetching absensi:', error);
-      res.status(500).json({ message: "Gagal memuat data absensi" }); 
+      console.error('Error during password update:', error);
+      return res.status(500).json({ success: false, message: 'An error occurred during the password update' });
     }
   });
+
+  // endpoint untuk reset password setelah login
+  app.get('/reset-password-after-login', async (req, res) => {
+    const loginSebagai = req.session.user ? req.session.user.login_sebagai : null;
+    const userId = req.session.user ? req.session.user.id : null;
+
+    console.log('Login Sebagai:', loginSebagai); 
+    console.log('User ID:', userId);
+
+    if (!loginSebagai || !userId) {
+        return res.status(400).send('Role and User ID are required');
+    }
+
+    try {
+        const table = loginSebagai === 'Pegawai' ? 'pegawai' : 'siswa';
+        const idColumn = loginSebagai === 'Pegawai' ? 'nip' : 'nisn';
+        const nameColumn = loginSebagai === 'Pegawai' ? 'nama_pegawai' : 'nama_siswa';
+
+        const [results] = await db.execute(`SELECT ${nameColumn} AS name FROM ${table} WHERE ${idColumn} = ?`, [userId]);
+
+        if (results.length === 0) {
+            return res.status(400).send('User not found');
+        }
+
+        const user = results[0];
+
+        const filePath = path.join(__dirname, 'frontend', 'html', 'sandi-stlh-login.html');
+        fs.readFile(filePath, 'utf8', (err, data) => {
+            if (err) {
+                console.error('Error reading HTML file:', err);
+                return res.status(500).send('Error loading page');
+            }
+
+            let htmlContent = data;
+            htmlContent = htmlContent
+                .replace('<%= role %>', loginSebagai)
+                .replace('<%= name %>', user.name);
+
+            res.send(htmlContent);
+        });
+    } catch (err) {
+        console.error('Error occurred while processing the request:', err);
+        return res.status(500).send('Error occurred while processing the request');
+    }
+});
+
+// endpoint untuk mengubah kata sandi setelah login
+app.put('/reset-password-after-login', async (req, res) => {
+    console.log('Request body:', req.body);
+    const loginSebagai = req.session.user ? req.session.user.login_sebagai : null;
+    const userId = req.session.user ? req.session.user.id : null;
+    const { newPassword, confirmPassword } = req.body;
+
+    if (!newPassword || !confirmPassword) {
+        return res.status(400).json({ success: false, message: 'New Password and Confirm Password are required' });
+    }
+
+    if (newPassword !== confirmPassword) {
+        return res.status(400).json({ success: false, message: 'Password and confirm password must match' });
+    }
+
+    if (!loginSebagai || !userId) {
+        return res.status(400).json({ success: false, message: 'Role and User ID are required' });
+    }
+
+    try {
+        const table = loginSebagai === 'Pegawai' ? 'pegawai' : 'siswa';
+        const idColumn = loginSebagai === 'Pegawai' ? 'nip' : 'nisn';
+
+        console.log('Checking user with ID:', userId);
+
+        const [user] = await db.execute(
+            `SELECT password FROM ${table} WHERE ${idColumn} = ?`,
+            [userId]
+        );
+
+        console.log('User fetched from database:', user);
+
+        if (!user || user.length === 0) {
+            return res.status(400).json({ success: false, message: 'Pengguna tidak ditemukan' });
+        }
+
+        if (user[0].password === newPassword) {
+            return res.status(400).json({ success: false, message: 'Password baru sama dengan yang lama' });
+        }
+
+        const updateResult = await db.execute(
+            `UPDATE ${table} SET password = ?, last_password_update = NOW() WHERE ${idColumn} = ?`,
+            [newPassword, userId]
+        );
+
+        console.log('Update Result:', updateResult);
+
+        if (updateResult.affectedRows > 0) {
+            return res.status(200).json({ success: true, message: 'Password berhasil diubah' });
+        } 
+
+    } catch (error) {
+        console.error('Error during password update:', error);
+    }
+});
 
 app.listen(PORT, () => {
     console.log(`Server berjalan di http://localhost:${PORT}`);

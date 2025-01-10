@@ -13,40 +13,66 @@ async function getUserSession() {
   }
 }
 
-
-
-function displayKelas(kelasData) {
-  console.log("kelasData:", kelasData);
-  const kelasInfoDiv = document.getElementById("info-kelas");
-  kelasInfoDiv.innerHTML = '';
-  if (Array.isArray(kelasData) && kelasData.length > 0) {
-      kelasData.forEach(kelas => {
-          const namaKelas = document.createElement("p");
-          namaKelas.innerHTML = `<strong>Nama Kelas:</strong> ${kelas.nama_kelas}`;
-
-          const tingkatan = document.createElement("p");
-          tingkatan.innerHTML = `<strong>Tingkatan:</strong> ${kelas.tingkatan}`;
-
-          const tahunAjaran = document.createElement("p");
-          tahunAjaran.innerHTML = `<strong>ID Tahun Ajaran:</strong> ${kelas.id_tahun_ajaran}`;
-          const namaTahunAjaran = document.createElement("p");
-          namaTahunAjaran.innerHTML = `
-          <strong>Tahun Ajaran:</strong> ${kelas.nama_tahun_ajaran || 'Tidak tersedia'} - ${kelas.semester || 'Tidak tersedia'}
-      `;
-          kelasInfoDiv.appendChild(namaKelas);
-          kelasInfoDiv.appendChild(tingkatan);
-          kelasInfoDiv.appendChild(tahunAjaran);
-          kelasInfoDiv.appendChild(namaTahunAjaran);
-      });
-  } else {
+async function displayKelas(kelasData) {
+    console.log("kelasData:", kelasData);
+    const kelasInfoDiv = document.getElementById("info-kelas");
+    kelasInfoDiv.innerHTML = '';
+  
+    if (Array.isArray(kelasData) && kelasData.length > 0) {
+      for (const kelas of kelasData) {
+        const namaKelas = document.createElement("p");
+        namaKelas.innerHTML = `<strong>Nama Kelas:</strong> ${kelas.nama_kelas}`;
+  
+        const tingkatan = document.createElement("p");
+        tingkatan.innerHTML = `<strong>Tingkatan:</strong> ${kelas.tingkatan}`;
+  
+        const namaTahunAjaran = document.createElement("p");
+        namaTahunAjaran.textContent = "Memuat data tahun ajaran...";
+  
+        const semesterInfo = document.createElement("p");
+        semesterInfo.textContent = "Memuat data semester...";
+  
+        // Tambahkan elemen sementara ke dalam DOM
+        kelasInfoDiv.appendChild(namaKelas);
+        kelasInfoDiv.appendChild(tingkatan);
+        kelasInfoDiv.appendChild(namaTahunAjaran);
+        kelasInfoDiv.appendChild(semesterInfo);
+  
+        if (kelas.id_tahun_ajaran) {
+          try {
+            const tahunAjaranResponse = await fetch(`/api/tahun-ajaran/${kelas.id_tahun_ajaran}`);
+            if (tahunAjaranResponse.ok) {
+              const tahunAjaranData = await tahunAjaranResponse.json();
+              namaTahunAjaran.innerHTML = `
+                <strong>Semester:</strong> ${tahunAjaranData.semester || 'Tidak tersedia'}
+              `;
+              semesterInfo.innerHTML = `
+                <strong>Nama Tahun Ajaran:</strong> ${tahunAjaranData.tahun_ajaran || 'Tidak tersedia'}
+              `;
+            } else {
+              console.error('Gagal mendapatkan Tahun Ajaran:', tahunAjaranResponse.statusText);
+              namaTahunAjaran.textContent = 'Nama Tahun Ajaran Tidak Ditemukan';
+              semesterInfo.textContent = 'Semester Tidak Ditemukan';
+            }
+          } catch (error) {
+            console.error('Error fetching Tahun Ajaran:', error);
+            namaTahunAjaran.textContent = 'Gagal memuat Nama Tahun Ajaran';
+            semesterInfo.textContent = 'Gagal memuat Semester';
+          }
+        } else {
+          namaTahunAjaran.textContent = 'ID Tahun Ajaran tidak tersedia';
+          semesterInfo.textContent = 'Semester Tidak Tersedia';
+        }
+      }
+    } else {
       const noKelasMessage = document.createElement("p");
       noKelasMessage.textContent = "Anda tidak mengelola kelas manapun.";
       noKelasMessage.classList.add('no-kelas');
       kelasInfoDiv.appendChild(noKelasMessage);
-  }
-
-  kelasInfoDiv.classList.remove("hidden");
-}
+    }
+  
+    kelasInfoDiv.classList.remove("hidden");
+  }  
 
 async function fetchKelas() {
   try {

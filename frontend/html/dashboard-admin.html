@@ -9,13 +9,14 @@
     <title>Admin Dashboard</title>
     <link rel="stylesheet" href="/css/dashboard-admin.css">
     <link rel="stylesheet" href="/css/data-pegawai.css">
-    <link rel="stylesheet" href="/css/mading.css">
-    <link rel="stylesheet" href="/css/data_mata-pelajaran.css">
-    <link rel="stylesheet" href="/css/data-kelas.css">
+    <link rel="stylesheet" href="/css/mading-2.css">
+    <link rel="stylesheet" href="/css/mata-pelajaran.css">
+    <link rel="stylesheet" href="/css/kelas.css">
     <link rel="stylesheet" href="/css/pop-up-menu.css">
-    
+
+    <!-- SweetAlert2 CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
- 
+    <!-- SweetAlert2 JavaScript -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 </head>
@@ -24,10 +25,9 @@
     <header>
         <h1>Admin Dashboard</h1>
         <div class="profile">
-            <i class="fas fa-user-circle" id="profile-icon"></i>
+            <i class="fas fa-user-circle" id="profile-icon"></i>  <!-- ID untuk ikon -->
             <span id="employee-name-header" class="employee-name">Tamu</span>
         </div>
-        <!-- pop up menu untuk ubah password dan logout -->
         <div id="profile-menu" class="profile-menu">
             <ul>
                 <li><a href="/reset-password-after-login">Ubah Kata Sandi</a></li>
@@ -35,6 +35,7 @@
             </ul>
         </div>
     </header>
+    
     <div class="dashboard">
         <aside class="sidebar">
             <ul>
@@ -46,37 +47,18 @@
                 <li><a href="#" data-target="tahun-ajaran">Tahun Ajaran</a></li>
                 <li><a href="#" data-target="mading">Mading</a></li>
             </ul>
-            <div class="sidebar-settings">
-                <a href="/settings">
-                    <img src="path/to/settings-icon.png" alt="Settings Icon">
-                </a>
-            </div>
-        </aside>
+            
+                    </aside>
         <main>
             <div class="welcome-message">
                 <h2>Selamat Datang, <span id="employee-name-message" class="employee-name">Tamu</span></h2>
             </div>
             <section id="admin-profile" class="content-section hidden">
-                <div class="profile-picture">
-                    <div class="profile-wrapper">
-                        <div class="profile-container">
-                            <img id="profile-image" src="/images/profile/kepsek.png" alt="Admin Picture">
-                            <div class="camera-text-wrapper">
-                                <span class="camera-text">
-                                    <i class="fas fa-camera"></i> Klik untuk ubah foto profil
-                                </span>
-                            </div>
-                        </div>
-
-                        <div class="dropdown-menu">
-                            <ul>
-                                <li><a href="#" id="view-photo"><i class="fas fa-eye"></i> Lihat Foto</a></li>
-                                <li><a href="#" id="browse-photo"><i class="fas fa-upload"></i> Unggah Foto</a></li>
-                                <li><a href="#" id="remove-photo"><i class="fas fa-trash"></i> Hapus Foto</a></li>
-                            </ul>
-                        </div>
-                    </div>
-
+                <div class="profile-container">
+                    <div class="profile-picture">
+                        <!-- Menampilkan huruf pertama dari nama pengguna -->
+                        <span id="profile-initial">T</span>
+                                            </div>
                     <hr class="profile-divider">
                     <div class="profile-details">
                         <div class="bio-item">
@@ -112,8 +94,9 @@
                     </div>
                 </div>
             </section>
+            
             <section id="data-pegawai" class="content-section hidden">
-                <h2>Data Guru dan Staf</h2>
+                <h2>Data Pegawai</h2>
                 <div class="search-add-container">
                     <div class="search-wrapper">
                         <input type="text" id="search-input" placeholder="Cari pegawai..." class="search-bar">
@@ -165,71 +148,6 @@
                     </tbody>
                 </table>
             </section>
-            <section id="data-kelas" class="content-section hidden">
-                <h2>Data Kelas</h2>
-                <div class="filter-wrapper">
-                    <label for="kelas-filter">Tahun Ajaran:</label>
-                    <select id="kelas-filter">
-                        <option value="">Semua</option>
-                        <!-- Options akan diisi melalui JavaScript -->
-                    </select>
-                </div>
-                <div class="search-add-container">
-                    <div class="search-wrapper">
-                        <input type="text" id="search-kelas-input" placeholder="Cari Data Kelas..." class="search-bar">
-                        <i class="fas fa-search search-icon"></i>
-                    </div>
-                    <button id="add-kelas-btn" class="btn btn-primary">Tambah Kelas</button>
-                </div>
-                <table border="1">
-                    <thead>
-                        <tr>
-                            <th>ID Kelas</th>
-                            <th>Nama Kelas</th>
-                            <th>Wali Kelas</th>
-                            <th>Tingkatan</th>
-                            <th>Detail</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="kelas-tbody">
-                        <!-- Data Kelas akan diisi dengan JavaScript -->
-                    </tbody>
-                </table>
-            </section>
-
-            <section id="mata-pelajaran" class="content-section hidden">
-                <h2>Data Mata Pelajaran</h2>
-                <div class="filter-wrapper">
-                    <label for="tahun-ajaran-filter">Semester:</label>
-                    <select id="tahun-ajaran-filter">
-                        <option value="">Semua</option>
-                        <!-- Options akan diisi melalui JavaScript -->
-                    </select>
-                </div>
-                <div class="search-add-container">
-                    <div class="search-wrapper">
-                        <input type="text" id="search-subject-input" placeholder="Cari mata pelajaran..." class="search-bar">
-                        <i class="fas fa-search search-icon"></i>
-                    </div>
-                    <button id="add-subject-btn" class="btn btn-primary">Tambah Mata Pelajaran</button>
-                </div>
-                
-                <table border="1">
-                    <thead>
-                        <tr>
-                            <th>Kode Mata Pelajaran</th>
-                            <th>Nama Mata Pelajaran</th>
-                            <th>NIP</th>
-                            <th>Action</th> <!-- Kolom untuk tombol Edit, Delete, dan Lihat Selengkapnya -->
-                        </tr>
-                    </thead>
-                    <tbody id="mata-pelajaran-tbody">
-                        <!-- Data Mata Pelajaran akan diisi dengan JavaScript -->
-                    </tbody>
-                </table>
-            </section>    
-
             <section id="tahun-ajaran" class="content-section hidden">
                 <h2>Data Tahun Ajaran</h2>
                 <div class="search-add-container">
@@ -237,11 +155,12 @@
                         <input type="text" id="search-year-input" placeholder="Cari tahun ajaran..." class="search-bar">
                         <i class="fas fa-search search-icon"></i>
                     </div>
-                    <button id="tambah-tahun-ajaran" class="btn btn-primary">Tambah Tahun Ajaran</button>
+                    <button id="tambah-tahun-ajaran">Tambah Tahun Ajaran</button>
                 </div>
                 <table border="1">
                     <thead>
                         <tr>
+                            <th>Kode Tahun Ajaran</th>
                             <th>Nama Tahun Ajaran</th>
                             <th>Tanggal Mulai</th>
                             <th>Tanggal Selesai</th>
@@ -254,7 +173,81 @@
                     </tbody>
                 </table>
             </section>
+            </section>
+            <section id="data-kelas" class="content-section">
+                <div id="sembunyi">
+                    <h2>Data Kelas</h2>
+                    <div class="filter-wrapper">
+                        <label for="kelas-filter">Tahun Ajaran:</label>
+                        <select id="kelas-filter">
+                            <option value="">Semua</option>
+                        </select>
+                    </div>
+                    <div class="search-add-container">
+                        <div class="search-wrapper">
+                            <input type="text" id="search-kelas-input" placeholder="Cari Data Kelas..."
+                                class="search-bar">
+                            <i class="fas fa-search search-icon"></i>
+                        </div>
+                        <button id="add-kelas-btn" class="btn btn-primary">Tambah Kelas</button>
+                    </div>
+                    <table border="1">
+                        <thead>
+                            <tr>
+                                <th>ID Kelas</th>
+                                <th>Nama Kelas</th>
+                                <th>Wali Kelas</th>
+                                <th>Tingkatan</th>
+                                <th>Detail</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="kelas-tbody">
+                            <!-- Data Kelas akan diisi dengan JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            
+                <div id="kelas-detail" class="hidden">
+                    <div id="detail-kelas-content">
+                        <!-- Detail kelas akan ditampilkan di sini -->
+                    </div>
+                </div>
+            </section>
+            <section id="mata-pelajaran" class="content-section hidden">
+                <h2>Data Mata Pelajaran</h2>
+                <div class="filter-wrapper">
+                    <label for="tahun-ajaran-filter">Semester:</label>
+                    <select id="tahun-ajaran-filter">
+                        <option value="">Semua</option>
+                        <!-- Options akan diisi melalui JavaScript -->
+                    </select>
+                </div>
+                <div class="search-add-container">
+                    <div class="search-wrapper">
+                        <input type="text" id="search-subject-input" placeholder="Cari mata pelajaran..."
+                            class="search-bar">
+                        <i class="fas fa-search search-icon"></i>
+                    </div>
+                    <button id="add-subject-btn" class="btn btn-primary">Tambah Mata Pelajaran</button>
+                </div>
 
+                <table border="1">
+                    <thead>
+                        <tr>
+                            <th>Kode Mata Pelajaran</th>
+                            <th>Nama Mata Pelajaran</th>
+                            <th>NIP</th>
+                            <th>Kelas</th>
+                            <th>Action</th>
+
+                        </tr>
+                    </thead>
+                    <tbody id="mata-pelajaran-tbody">
+                        <!-- Data Mata Pelajaran akan diisi dengan JavaScript -->
+                    </tbody>
+                </table>
+            </section>        
             <section id="mading" class="content-section hidden">
                 <h2>Data Pengumuman pada Mading</h2>
                 <div class="search-add-container">
@@ -268,27 +261,21 @@
                     <!-- Cards akan ditambahkan dengan JavaScript -->
                 </div>
             </section>
+            <!-- Modal untuk Detail Kelas -->
 
-            <div id="kelas-detail-modal" class="modal" style="display: none;">
-                <div class="modal-content">
-                    <span id="close-detail" class="close">&times;</span>
-                    <h2 id="modal-title"></h2>
-                    <div id="modal-body"></div>
-                </div>
-            </div>
         </main>
     </div>
-
-    <script src="/js/pop-up-menu.js"></script>
     <script src="/js/dashboard-admin.js"></script>
-    <script src="js/data-pegawai.js"></script>
+    <script src="/js/data-pegawai.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="/js/data-siswa.js"></script>
     <script src="/js/tahun-ajaran.js"></script>
     <script src="/js/data-kelas.js"></script>
     <script src="/js/data-mata_pelajaran.js"></script>
     <script src="/js/data-mading.js"></script>
+    <script src="/js/pop-up-menu.js"></script>
 
 </body>
 
 </html>
+
